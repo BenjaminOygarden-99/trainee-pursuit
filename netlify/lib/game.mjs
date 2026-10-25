@@ -24,7 +24,7 @@ const answerLabel = (q) => q.answerLabel ?? (q.type === 'mc' ? q.options[q.answe
 
 function initialState() {
   return {
-    phase: 'lobby', // lobby | category | question | reveal | board | leaderboard | winner
+    phase: 'lobby', // intro | lobby | category | question | reveal | board | leaderboard | winner
     qIndex: -1,
     openedAt: null,
     deadline: null,
@@ -250,6 +250,10 @@ async function admin(store, req, body) {
       break;
     case 'lobby':
       s.phase = 'lobby';
+      await saveState(store, s);
+      break;
+    case 'intro':
+      s.phase = 'intro';
       await saveState(store, s);
       break;
     case 'category': {

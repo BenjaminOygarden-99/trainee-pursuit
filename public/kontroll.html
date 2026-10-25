@@ -7,65 +7,94 @@
 <title>Trainee Pursuit – kontrollpanel</title>
 <link rel="stylesheet" href="/shared.css">
 <style>
-  body { font-size: 16px; }
-  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--stage-deep); border-bottom: 1px solid var(--line); }
-  header .mark { font-family: var(--display); font-size: 22px; }
-  .phase-now { font-size: 15px; color: var(--cream-dim); }
-  .phase-now strong { color: var(--cream); }
-  .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; padding: 24px; max-width: 1500px; margin: 0 auto; }
-  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
-  section.box { background: var(--stage-deep); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
-  h2 { font-size: 18px; margin: 0 0 14px; }
-  .btn { padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--stage-lift); font-weight: 700; }
-  .btn:hover { border-color: var(--cream-dim); }
-  .btn.go { background: var(--cream); color: var(--stage); border-color: var(--cream); }
-  .btn.danger { background: transparent; color: #ffb3d3; border-color: #ffb3d3; }
-  .btn:disabled { opacity: .4; cursor: default; }
+  /* Backstage: samme show, men arbeidsflate. Lite dekor, høy tetthet. */
+  body { font-size: 16px; background: linear-gradient(180deg, var(--deep), var(--ink)) fixed; min-height: 100vh; }
+  header { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 10px 24px; background: var(--ink); border-bottom: 4px solid var(--gold); box-shadow: 0 4px 0 #6e4c0b; }
+  header .brand { display: flex; align-items: center; gap: 14px; }
+  header .brand small { font-family: var(--sign); font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); }
+  .phase-now { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 8px; background: #3a0d0a; border: 2px solid var(--coral); font-family: var(--sign); font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: #ffc9be; }
+  .phase-now::before { content: ''; width: 11px; height: 11px; border-radius: 50%; background: #ff5b45; box-shadow: 0 0 10px #ff5b45; }
+  .phase-now strong { color: var(--warm); font-weight: 700; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; padding: 22px 24px 40px; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 14px; } header { padding: 10px 14px; } }
+  section.box { background: linear-gradient(180deg, #0a4c48, var(--teal)); border: 3px solid var(--cream); border-radius: 12px; padding: 16px 18px 18px; margin-bottom: 22px; box-shadow: 0 0 0 2px var(--ink), 0 6px 0 2px var(--ink); }
+  h2 { font-family: var(--sign); font-size: 16px; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; color: var(--gold); }
+  a { color: var(--cream); }
+
+  /* Knapper */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 15px; border-radius: 10px; border: 3px solid var(--ink); background: linear-gradient(180deg, #146d66, #0b5651); color: var(--warm); font-weight: 800; text-decoration: none; box-shadow: inset 0 2px 0 rgba(255,249,234,.2), 0 4px 0 var(--ink); transition: transform 70ms; }
+  .btn:hover:not(:disabled) { background: linear-gradient(180deg, #1a7f77, #0e625c); }
+  .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255,249,234,.2), 0 1px 0 var(--ink); }
+  .btn.primary { background: linear-gradient(180deg, #ffe08f, var(--gold) 55%, #e0a22e); color: var(--ink); box-shadow: inset 0 2px 0 rgba(255,255,255,.6), 0 4px 0 #6e4c0b; }
+  .btn.go { outline: 3px solid var(--coral); outline-offset: 2px; }
+  .btn.go::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #ff5b45; box-shadow: 0 0 8px #ff5b45; }
+  .btn.danger { background: #3a0d0a; color: #ffc9be; border-color: var(--coral); box-shadow: 0 4px 0 #1c0504; }
+  .btn.danger:hover:not(:disabled) { background: #551510; }
+  .btn.danger[data-sure] { background: var(--coral); color: var(--ink); }
+  .btn:disabled { opacity: .35; cursor: default; }
   .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
-  .current { border-left: 8px solid var(--cat, var(--line)); padding-left: 16px; }
-  .current .meta { color: var(--cream-dim); font-size: 14px; }
-  .current .q { font-size: 20px; font-weight: 700; margin: 6px 0 10px; }
-  .current .facit { background: var(--stage-lift); padding: 8px 12px; border-radius: 8px; display: inline-block; }
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
-  .steps .btn { padding: 16px 10px; }
-  .steps .btn.active { outline: 3px solid var(--cream); }
-  .live { margin-top: 14px; font-size: 18px; }
-  .live strong { font-family: var(--display); font-weight: 400; font-size: 26px; }
+  /* Aktivt spørsmål */
+  .current { border-left: 8px solid var(--cat, var(--line)); padding-left: 14px; }
+  .current .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--cream); font-size: 14px; font-weight: 600; }
+  .current .meta .cat-sign { font-size: 13px; }
+  .current .q { font-size: 21px; font-weight: 800; line-height: 1.3; margin: 12px 0; color: var(--warm); }
+  .current .facit { display: inline-block; padding: 8px 12px; border-radius: 8px; background: var(--ink); border: 2px dashed var(--green); color: var(--muted); }
+  .current .facit strong { color: var(--green); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  .steps .btn { min-height: 64px; font-size: 17px; }
+  @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
+  .live { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--ink); font-size: 16px; color: var(--cream); }
+  .live strong { font-family: var(--digits); font-weight: 900; font-size: 26px; color: var(--gold); }
 
+  /* Spørsmålsliste */
   .qlist { list-style: none; margin: 0; padding: 0; }
-  .qlist li { display: grid; grid-template-columns: 28px 14px 1fr auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid var(--line); }
-  .qlist li.sel { background: var(--stage-lift); border-radius: 8px; }
-  .qlist .dot { width: 14px; height: 14px; border-radius: 50%; }
-  .qlist .n { color: var(--cream-dim); text-align: right; }
+  .qlist li { display: grid; grid-template-columns: 26px 16px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); border-radius: 8px; }
+  .qlist li.sel { background: rgba(244, 185, 66, .14); box-shadow: inset 0 0 0 2px var(--gold); border-bottom-color: transparent; }
+  .qlist .dot { width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(from -30deg, currentColor 0 60deg, var(--ink) 60deg); border: 2px solid var(--cream); }
+  .qlist .n { color: var(--muted); text-align: right; font-weight: 600; }
   .qlist .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .qlist .round-sep { display: block; font-weight: 700; padding: 14px 6px 6px; color: var(--cream-dim); border: 0; }
+  .qlist .round-sep { display: block; font-family: var(--sign); text-transform: uppercase; letter-spacing: .06em; padding: 14px 8px 6px; color: var(--gold); border: 0; font-size: 14px; }
+  .qlist .btn { min-height: 32px; padding: 3px 12px; font-size: 14px; }
 
-  table.cakes { width: 100%; border-collapse: collapse; }
-  table.cakes th, table.cakes td { padding: 6px; text-align: center; }
-  table.cakes th[scope=row] { text-align: left; font-weight: 700; }
-  table.cakes thead th { font-size: 12px; color: var(--cream-dim); font-weight: 400; }
-  .wedge-btn { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); background: transparent; }
-  .wedge-btn[aria-pressed=true] { background: var(--c); }
-  .cake-cell svg { width: 46px; height: 46px; }
-  .warn { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f4c43022; border: 1px solid #F4C430; }
+  /* Kakestykker som resultattavle */
+  .board-wrap { overflow-x: auto; }
+  table.cakes { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  table.cakes th, table.cakes td { padding: 3px; text-align: center; }
+  table.cakes th[scope=row] { text-align: left; font-family: var(--sign); text-transform: uppercase; font-size: 15px; letter-spacing: .03em; padding-left: 12px; white-space: nowrap; }
+  table.cakes tbody tr { background: var(--ink); }
+  table.cakes tbody th:first-child { border-radius: 10px 0 0 10px; }
+  table.cakes tbody td:last-child { border-radius: 0 10px 10px 0; }
+  table.cakes thead th { font-size: 11px; line-height: 1.15; color: var(--cream); font-weight: 600; vertical-align: bottom; }
+  table.cakes thead .cat-mark { flex-direction: column; gap: 4px; }
+  .wedge-btn { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #2c4a46; background: radial-gradient(circle at 40% 35%, #23403c, #0f2a27); transition: background 120ms; }
+  .wedge-btn:hover { border-color: var(--c); }
+  .wedge-btn[aria-pressed=true] { border-color: var(--cream); background: radial-gradient(circle at 38% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000)); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 70%, transparent); }
+  .tot { white-space: nowrap; }
+  .tot .flap { font-size: 18px; }
+  .cake-cell svg { width: 42px; height: 42px; }
+  .warn { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(244, 185, 66, .12); border: 3px solid var(--gold); color: var(--warm); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-weight: 600; }
 
-  .groups { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
-  .groups div strong { font-family: var(--display); font-weight: 400; font-size: 24px; margin-right: 6px; }
+  /* Publikum */
+  .groups { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .groups div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--ink); color: var(--cream); font-weight: 600; }
+  .groups .flap { font-size: 20px; }
   .top { list-style: none; padding: 0; margin: 0; }
   .top li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .top .small { font-size: 13px; padding: 6px 10px; }
+  .top li > span:nth-child(2) { font-family: var(--digits); font-weight: 900; color: var(--gold); }
+  .top .small { font-size: 13px; min-height: 32px; padding: 3px 10px; }
 
-  .login { max-width: 380px; margin: 12vh auto; padding: 0 16px; }
-  .login input { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--stage-deep); font-size: 20px; margin: 10px 0 14px; }
-  .err { color: #ffb3d3; font-weight: 700; min-height: 1.4em; }
-  a { color: var(--cream); }
+  .login { max-width: 420px; margin: 10vh auto; padding: 0 16px; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+  .login .box { width: 100%; text-align: left; }
+  .login input { width: 100%; padding: 14px; border-radius: 10px; border: 3px solid var(--ink); background: var(--warm); color: var(--ink); font-size: 22px; font-weight: 800; margin: 10px 0 14px; box-shadow: 0 0 0 3px var(--cream); }
+  .login input:focus { outline: none; box-shadow: 0 0 0 4px var(--gold); }
+  .err { color: var(--coral); font-weight: 800; min-height: 1.4em; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { api, syncClock, secondsLeft, h, cakeSVG, catOf, teamName, groupName, poll, store } from '/shared.js';
+import { api, syncClock, secondsLeft, h, cakeSVG, catOf, teamName, groupName, poll, store, pursuitSign, flap } from '/shared.js';
 
 const session = store('session');
 const app = document.getElementById('app');
@@ -75,7 +104,7 @@ let selected = null;
 let stopPoll = null;
 let lastError = '';
 
-const phaseNames = { lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
+const phaseNames = { intro: 'Intro', lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
 
 async function act(action, extra = {}) {
   try {
@@ -92,11 +121,13 @@ async function act(action, extra = {}) {
 function loginView() {
   const input = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'current-password', 'aria-label': 'PIN' });
   return h('form', { class: 'login', onsubmit: (e) => { e.preventDefault(); pin = input.value; session.set('tp-pin', pin); start(); } },
-    h('h1', { class: 'wordmark', style: { fontSize: '44px' } }, h('span', {}, 'Trainee'), h('span', {}, 'Pursuit')),
-    h('p', { class: 'muted' }, 'Kontrollpanel for teknisk ansvarlig. Skriv inn PIN-koden.'),
-    input,
-    h('div', { class: 'err', role: 'alert' }, lastError),
-    h('button', { class: 'btn go', type: 'submit' }, 'Logg inn'));
+    pursuitSign({ scale: 0.36 }),
+    h('section', { class: 'box' },
+      h('h2', {}, 'Kontrollrom'),
+      h('p', { style: { margin: 0 } }, 'For teknisk ansvarlig. Skriv inn PIN-koden.'),
+      input,
+      h('div', { class: 'err', role: 'alert' }, lastError),
+      h('button', { class: 'btn primary', type: 'submit', style: { width: '100%' } }, 'Logg inn')));
 }
 
 function currentBox() {
@@ -107,7 +138,7 @@ function currentBox() {
   const isLive = st.qIndex === i;
   const facit = q.type === 'mc' ? `${'ABCD'[q.answer]}: ${q.options[q.answer]}` : (q.answerLabel ?? `${q.answer} ${q.unit ?? ''}`);
   const step = (label, action, activePhase, enabled = true) =>
-    h('button', { class: 'btn' + (isLive && st.phase === activePhase ? ' active go' : ''), disabled: !enabled, onclick: () => act(action, { qIndex: i }) }, label);
+    h('button', { class: 'btn' + (action === 'open' ? ' primary' : '') + (isLive && st.phase === activePhase ? ' active go' : ''), disabled: !enabled, onclick: () => act(action, { qIndex: i }) }, label);
   const live = isLive && st.phase === 'question'
     ? h('div', { class: 'live' }, h('strong', { id: 'cd' }, secondsLeft(st.deadline)), ' sekunder igjen, ', h('strong', {}, data.answers), ' svar fra salen')
     : isLive && st.phase === 'reveal'
@@ -116,7 +147,7 @@ function currentBox() {
   const next = data.questions[i + 1];
   return h('section', { class: 'box' },
     h('div', { class: 'current', style: { '--cat': cat.color } },
-      h('div', { class: 'meta' }, `${q.round}, spørsmål ${i + 1} av ${data.questions.length}, ${cat.name}`),
+      h('div', { class: 'meta' }, h('span', { class: 'cat-sign' }, cat.name), `${q.round}, spørsmål ${i + 1} av ${data.questions.length}`),
       h('div', { class: 'q' }, q.text),
       h('div', { class: 'facit' }, 'Fasit (bare synlig her): ', h('strong', {}, facit))),
     h('div', { class: 'steps' },
@@ -137,7 +168,7 @@ function listBox() {
     const cat = catOf(data.game, q.cat);
     items.push(h('li', { class: (selected ?? st.qIndex) === i ? 'sel' : '' },
       h('span', { class: 'n' }, i + 1),
-      h('span', { class: 'dot', style: { background: cat.color } }),
+      h('span', { class: 'dot', style: { color: cat.color }, title: cat.name }),
       h('span', { class: 't', title: q.text }, q.text),
       h('button', { class: 'btn', style: { padding: '6px 10px' }, onclick: () => { selected = i; draw(); } }, st.qIndex === i ? 'Aktiv' : 'Velg')));
   });
@@ -148,24 +179,25 @@ function cakesBox() {
   const st = data.state;
   const g = data.game;
   const table = h('table', { class: 'cakes' },
-    h('thead', {}, h('tr', {}, h('th', {}, ''), g.categories.map((c) => h('th', { scope: 'col' }, c.name)), h('th', {}, ''))),
+    h('thead', {}, h('tr', {}, h('th', {}, ''), g.categories.map((c) => h('th', { scope: 'col' }, h('span', { class: 'cat-mark', style: { '--cat': c.color } }, c.name))), h('th', { scope: 'col' }, 'Sum'), h('th', {}, ''))),
     h('tbody', {}, g.teams.map((t) => h('tr', {},
       h('th', { scope: 'row' }, t.name),
       g.categories.map((c) => {
         const on = st.cakes[t.id].includes(c.id);
         return h('td', {}, h('button', { class: 'wedge-btn', style: { '--c': c.color }, 'aria-pressed': String(on), 'aria-label': `${t.name}: ${c.name}`, title: `${t.name}: ${c.name}`, onclick: () => act('wedge', { team: t.id, cat: c.id, on: !on }) }));
       }),
+      h('td', { class: 'tot' }, flap(`${st.cakes[t.id].length}/${g.categories.length}`)),
       h('td', { class: 'cake-cell' }, cakeSVG(g.categories, st.cakes[t.id], t.name))))));
   const full = data.fullCakes;
   const warn = full.length === 1
-    ? h('div', { class: 'warn' }, `${teamName(g, full[0])} har full kake. `, h('button', { class: 'btn go', onclick: () => act('winner', { team: full[0] }) }, `Kår ${teamName(g, full[0])} som vinner`))
+    ? h('div', { class: 'warn' }, `${teamName(g, full[0])} har full kake. `, h('button', { class: 'btn primary', onclick: () => act('winner', { team: full[0] }) }, `Kår ${teamName(g, full[0])} som vinner`))
     : full.length > 1
       ? h('div', { class: 'warn' }, `${full.map((id) => teamName(g, id)).join(' og ')} har full kake samtidig. Bruk et tiebreak-spørsmål, og kår vinneren under.`, h('div', { class: 'row', style: { marginTop: '10px' } }, full.map((id) => h('button', { class: 'btn', onclick: () => act('winner', { team: id }) }, `Kår ${teamName(g, id)}`))))
       : null;
   return h('section', { class: 'box' },
     h('h2', {}, 'Kakestykker'),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Trykk på en farge for å gi eller ta bort et stykke. Storskjermen oppdateres når kakestillingen vises.'),
-    table, warn,
+    h('div', { class: 'board-wrap' }, table), warn,
     h('div', { class: 'row', style: { marginTop: '14px' } }, h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Vis kakestillingen på skjermen')));
 }
 
@@ -174,7 +206,7 @@ function audienceBox() {
   const total = Object.values(data.players).reduce((a, b) => a + b, 0);
   return h('section', { class: 'box' },
     h('h2', {}, `Publikum (${total} med)`),
-    h('div', { class: 'groups' }, g.groups.map((gr) => h('div', {}, h('strong', {}, data.players[gr.id]), gr.name))),
+    h('div', { class: 'groups' }, g.groups.map((gr) => h('div', {}, flap(data.players[gr.id]), gr.name))),
     h('p', { class: 'muted', style: { margin: '6px 0 10px' } }, 'Topp 10. Sjekk kallenavnene før topplisten vises, og fjern upassende navn.'),
     data.top.length
       ? h('ol', { class: 'top' }, data.top.map((p) => h('li', {},
@@ -188,6 +220,7 @@ function audienceBox() {
 
 function confirmThen(btn, label, fn) {
   if (btn.dataset.sure) return fn();
+  btn.dataset.orig ??= btn.textContent;
   btn.dataset.sure = '1'; btn.textContent = label;
   setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = btn.dataset.orig ?? btn.textContent; } }, 4000);
 }
@@ -207,9 +240,10 @@ function draw() {
   const st = data.state;
   app.replaceChildren(
     h('header', {},
-      h('div', { class: 'mark' }, 'Trainee Pursuit, kontroll'),
-      h('div', { class: 'phase-now' }, 'Storskjermen viser: ', h('strong', {}, phaseNames[st.phase] ?? st.phase)),
+      h('div', { class: 'brand' }, pursuitSign({ scale: 0.12, bulbs: false }), h('small', {}, 'Kontrollrom')),
+      h('div', { class: 'phase-now' }, 'På storskjermen: ', h('strong', {}, phaseNames[st.phase] ?? st.phase)),
       h('div', { class: 'row' },
+        h('button', { class: 'btn' + (st.phase === 'intro' ? ' go' : ''), onclick: () => act('intro') }, st.phase === 'intro' ? 'Spill intro på nytt' : 'Spill intro'),
         h('button', { class: 'btn' + (st.phase === 'lobby' ? ' go' : ''), onclick: () => act('lobby') }, 'Velkomst og QR'),
         h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Kakestilling'))),
     lastError ? h('div', { class: 'err', role: 'alert', style: { padding: '12px 24px' } }, lastError) : '',

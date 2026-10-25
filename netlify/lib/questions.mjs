@@ -6,12 +6,12 @@ export const game = {
   title: 'Trainee Pursuit',
   event: 'Høstbord 2026',
   categories: [
-    { id: 'sport', name: 'Sport og fritid', color: '#F07F2E' },
-    { id: 'geo', name: 'Geografi', color: '#3D8FE0' },
-    { id: 'hist', name: 'Historie', color: '#F4C430' },
-    { id: 'und', name: 'Underholdning', color: '#E8589C' },
-    { id: 'kunst', name: 'Kunst og litteratur', color: '#B0703F' },
-    { id: 'natur', name: 'Naturfag', color: '#42B35E' },
+    { id: 'sport', name: 'Sport og fritid', color: '#E96F3A' },
+    { id: 'geo', name: 'Geografi', color: '#65BFC1' },
+    { id: 'hist', name: 'Historie', color: '#F4B942' },
+    { id: 'und', name: 'Underholdning', color: '#D978A1' },
+    { id: 'kunst', name: 'Kunst og litteratur', color: '#9A83BD' },
+    { id: 'natur', name: 'Naturfag', color: '#83C994' },
   ],
   // Lagene på scenen (kakene)
   teams: [

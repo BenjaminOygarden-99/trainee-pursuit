@@ -12,6 +12,12 @@
 | `/skjerm` | Projektor | QR-kode, kategori, spørsmål med nedtelling, fasit med statistikk per gruppe, kakestilling, toppliste, vinner |
 | `/kontroll` | Teknisk ansvarlig (PIN) | Styrer alt som vises på skjermen, deler ut kakestykker, fjerner upassende kallenavn |
 
+## Intro før showet
+
+Trykk **«Spill intro»** øverst i kontrollpanelet. Teppet går opp, Pursuit-skiltet faller ned og lyspærene tennes (ca. 6 sekunder), og mobilene viser «Showet starter!». Start musikken fra teknisk-PC-en samtidig. Når Agne er klar, trykk **«Velkomst og QR»**. Introen kan spilles på nytt så mange ganger dere vil, også under generalprøven.
+
+Musikken ligger ikke i appen. Den spilles fra kjøreplanens spilleliste, slik at appen ikke blir avhengig av YouTube og ikke bryter opphavsretten.
+
 ## Slik går en runde (kontrollpanelet)
 
 1. **Vis kategori.** Skjermen blir farget i kategorien. Lagene sender frem deltakeren.
@@ -81,5 +87,6 @@ public/skjerm.html           Storskjerm
 public/kontroll.html         Kontrollpanel
 public/shared.js|css         Felles kode og stil
 public/vendor/qr.js          QR-motor (MIT, fra qrcode-terminal), uten CDN
+public/fonts/                Lokale webfonter (TeX Gyre Adventor, Inter) med lisenser
 dev-server.mjs               Lokal testserver
 ```
