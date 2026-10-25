@@ -12,16 +12,30 @@
 | `/skjerm` | Projektor | QR-kode, kategori, spørsmål med nedtelling, fasit med statistikk per gruppe, kakestilling, toppliste, vinner |
 | `/kontroll` | Teknisk ansvarlig (PIN) | Styrer alt som vises på skjermen, deler ut kakestykker, fjerner upassende kallenavn |
 
-## Slik går en runde (kontrollpanelet)
+## Slik kjører du showet (én knapp)
 
-1. **Vis kategori.** Skjermen blir farget i kategorien. Lagene sender frem deltakeren.
-2. **Start 20 s.** Spørsmålet vises på skjermen og på mobilene. Svar telles live.
-3. **Vis fasit.** Først når lagenes tavler er gjennomgått. Skjermen viser riktig svar, prosent riktig per gruppe og hvem som var raskest. I finalen vises gruppenes median og hvem i salen som var nærmest.
-4. **Gi kakestykke** i tabellen «Kakestykker». Trykk «Vis kakestillingen på skjermen» når Agne vil vise stillingen.
+Kontrollpanelet (`/kontroll`) følger manuset steg for steg. **Det eneste du gjør er å trykke NESTE, og å trykke på laget som fikk poeng.** Alt annet skjer automatisk: kategorier, spørsmål, klokke, «Snu tavlene!», fasit med statistikk, kakestykker, stillingen, finalen, vinnerkåring og musikk.
 
-Får et lag full kake, foreslår panelet å kåre vinneren. Får flere lag full kake samtidig, varsler panelet om tiebreak.
+1. **Før gjestene kommer:** Åpne `/skjerm` på PC-en som er koblet til projektor og lyd. Klikk «Klikk for å aktivere lyd», og dra inn de tre musikkfilene (se under). Åpne `/kontroll` på en annen skjerm, mobil eller nettbrett, og logg inn med PIN.
+2. **Under showet:** Trykk **NESTE**. Panelet viser hva som skjer på storskjermen og hva Agne skal si (replikkene er hentet fra manuset). En presentasjonsklikker fungerer også (pil høyre eller Page Down).
+3. **Etter hver fasit:** Trykk på laget eller lagene som hadde riktig svar på tavla. Laget får kakestykket, storskjermen viser et banner, og det spilles en pling. I finalen trykker du på laget som var nærmest. Lag som allerede har stykket, er sperret.
+4. **Får et lag full kake,** hopper neste trykk rett til vinnerkåringen. Er spørsmålene brukt opp, vinner laget med flest stykker. Ved uavgjort ber panelet deg velge vinner under «Avansert».
 
-**Poeng for publikum:** Riktig flervalgssvar gir 500–1000 poeng (raskere gir flere). I tallspørsmålene gir svar innenfor 1 % 1000 poeng, innenfor 5 % 700 og innenfor 15 % 300.
+«Tilbake ett steg», «Stopp musikken», manuelle kakestykker, hopp i manuset, fjerning av kallenavn og nullstilling ligger under **Avansert**.
+
+**Svaralternativene vises ikke på storskjermen mens klokka går,** bare på mobilene. Ellers ville lagene på scenen fått flervalg. Alternativene og fordelingen vises ved fasit.
+
+## Musikk
+
+| Spor | Brukes til |
+|---|---|
+| Intro og vinner (Game Show Theme) | Intro (dempes etter 14 s når Agne snakker), lagpresentasjon, stillingen, vinner, avslutning |
+| Seriøs / dyster (Big Brother – Trust No One) | Reglene, under kategoriene, finaleintroen |
+| Nedtelling (Jeopardy) | Nøyaktig de 20 sekundene klokka går. Stopper når tiden er ute, etterfulgt av en summer. |
+
+Pling (kakestykke), summer (tiden er ute), «ta-da» (fasit) og «whoosh» (kategori) lages av nettleseren selv. Det trengs ingen filer til dem.
+
+**Musikkfilene legges inn på storskjerm-PC-en, ikke i GitHub.** De lagres i nettleseren på den PC-en (IndexedDB) og blir der til nettleserdata slettes. Låtene er opphavsrettsbeskyttet, og et Netlify-nettsted er offentlig, så ikke legg dem i repoet. `.gitignore` stopper `public/audio/*.mp3`. Trykk **L** på storskjermen for å åpne lydpanelet igjen, og **M** for å stoppe musikken.
 
 ## Publisere på Netlify
 
@@ -81,5 +95,6 @@ public/skjerm.html           Storskjerm
 public/kontroll.html         Kontrollpanel
 public/shared.js|css         Felles kode og stil
 public/vendor/qr.js          QR-motor (MIT, fra qrcode-terminal), uten CDN
+public/fonts/                Lokale webfonter (TeX Gyre Adventor, Inter) med lisenser
 dev-server.mjs               Lokal testserver
 ```

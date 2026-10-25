@@ -7,75 +7,142 @@
 <title>Trainee Pursuit – kontrollpanel</title>
 <link rel="stylesheet" href="/shared.css">
 <style>
-  body { font-size: 16px; }
-  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--stage-deep); border-bottom: 1px solid var(--line); }
-  header .mark { font-family: var(--display); font-size: 22px; }
-  .phase-now { font-size: 15px; color: var(--cream-dim); }
-  .phase-now strong { color: var(--cream); }
-  .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; padding: 24px; max-width: 1500px; margin: 0 auto; }
-  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
-  section.box { background: var(--stage-deep); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
-  h2 { font-size: 18px; margin: 0 0 14px; }
-  .btn { padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--stage-lift); font-weight: 700; }
-  .btn:hover { border-color: var(--cream-dim); }
-  .btn.go { background: var(--cream); color: var(--stage); border-color: var(--cream); }
-  .btn.danger { background: transparent; color: #ffb3d3; border-color: #ffb3d3; }
-  .btn:disabled { opacity: .4; cursor: default; }
+  /* Backstage: samme show, men arbeidsflate. Lite dekor, høy tetthet. */
+  body { font-size: 16px; background: linear-gradient(180deg, var(--deep), var(--ink)) fixed; min-height: 100vh; }
+  header { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; padding: 10px 24px; background: var(--ink); border-bottom: 4px solid var(--gold); box-shadow: 0 4px 0 #6e4c0b; }
+  header .brand { display: flex; align-items: center; gap: 14px; }
+  header .brand small { font-family: var(--sign); font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); }
+  .phase-now { display: inline-flex; align-items: center; gap: 10px; padding: 7px 14px; border-radius: 8px; background: #3a0d0a; border: 2px solid var(--coral); font-family: var(--sign); font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: #ffc9be; }
+  .phase-now::before { content: ''; width: 11px; height: 11px; border-radius: 50%; background: #ff5b45; box-shadow: 0 0 10px #ff5b45; }
+  .phase-now strong { color: var(--warm); font-weight: 700; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 22px; padding: 22px 24px 40px; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 960px) { .layout { grid-template-columns: minmax(0, 1fr); padding: 14px; } header { padding: 10px 14px; } }
+  section.box { background: linear-gradient(180deg, #0a4c48, var(--teal)); border: 3px solid var(--cream); border-radius: 12px; padding: 16px 18px 18px; margin-bottom: 22px; box-shadow: 0 0 0 2px var(--ink), 0 6px 0 2px var(--ink); }
+  h2 { font-family: var(--sign); font-size: 16px; text-transform: uppercase; letter-spacing: .06em; margin: 0 0 12px; color: var(--gold); }
+  a { color: var(--cream); }
+
+  /* Knapper */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 9px 15px; border-radius: 10px; border: 3px solid var(--ink); background: linear-gradient(180deg, #146d66, #0b5651); color: var(--warm); font-weight: 800; text-decoration: none; box-shadow: inset 0 2px 0 rgba(255,249,234,.2), 0 4px 0 var(--ink); transition: transform 70ms; }
+  .btn:not(.primary):not(.danger):hover:not(:disabled) { background: linear-gradient(180deg, #1a7f77, #0e625c); }
+  .btn.primary:hover:not(:disabled) { background: linear-gradient(180deg, #ffe9ad, #f7c75e 55%, #e8ad3a); }
+  .btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 2px 0 rgba(255,249,234,.2), 0 1px 0 var(--ink); }
+  .btn.primary { background: linear-gradient(180deg, #ffe08f, var(--gold) 55%, #e0a22e); color: var(--ink); box-shadow: inset 0 2px 0 rgba(255,255,255,.6), 0 4px 0 #6e4c0b; }
+  .btn.go { outline: 3px solid var(--coral); outline-offset: 2px; }
+  .btn.go::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #ff5b45; box-shadow: 0 0 8px #ff5b45; }
+  .btn.danger { background: #3a0d0a; color: #ffc9be; border-color: var(--coral); box-shadow: 0 4px 0 #1c0504; }
+  .btn.danger:hover:not(:disabled) { background: #551510; }
+  .btn.danger[data-sure] { background: var(--coral); color: var(--ink); }
+  .btn:disabled { opacity: .35; cursor: default; }
   .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 
-  .current { border-left: 8px solid var(--cat, var(--line)); padding-left: 16px; }
-  .current .meta { color: var(--cream-dim); font-size: 14px; }
-  .current .q { font-size: 20px; font-weight: 700; margin: 6px 0 10px; }
-  .current .facit { background: var(--stage-lift); padding: 8px 12px; border-radius: 8px; display: inline-block; }
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
-  .steps .btn { padding: 16px 10px; }
-  .steps .btn.active { outline: 3px solid var(--cream); }
-  .live { margin-top: 14px; font-size: 18px; }
-  .live strong { font-family: var(--display); font-weight: 400; font-size: 26px; }
+  /* Aktivt spørsmål */
+  .current { border-left: 8px solid var(--cat, var(--line)); padding-left: 14px; }
+  .current .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; color: var(--cream); font-size: 14px; font-weight: 600; }
+  .current .meta .cat-sign { font-size: 13px; }
+  .current .q { font-size: 21px; font-weight: 800; line-height: 1.3; margin: 12px 0; color: var(--warm); }
+  .current .facit { display: inline-block; padding: 8px 12px; border-radius: 8px; background: var(--ink); border: 2px dashed var(--green); color: var(--muted); }
+  .current .facit strong { color: var(--green); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  .steps .btn { min-height: 64px; font-size: 17px; }
+  @media (max-width: 520px) { .steps { grid-template-columns: 1fr; } }
+  .live { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--ink); font-size: 16px; color: var(--cream); }
+  .live strong { font-family: var(--digits); font-weight: 900; font-size: 26px; color: var(--gold); }
 
+  /* Spørsmålsliste */
   .qlist { list-style: none; margin: 0; padding: 0; }
-  .qlist li { display: grid; grid-template-columns: 28px 14px 1fr auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid var(--line); }
-  .qlist li.sel { background: var(--stage-lift); border-radius: 8px; }
-  .qlist .dot { width: 14px; height: 14px; border-radius: 50%; }
-  .qlist .n { color: var(--cream-dim); text-align: right; }
+  .qlist li { display: grid; grid-template-columns: 26px 16px 1fr auto; gap: 10px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); border-radius: 8px; }
+  .qlist li.sel { background: rgba(244, 185, 66, .14); box-shadow: inset 0 0 0 2px var(--gold); border-bottom-color: transparent; }
+  .qlist .dot { width: 16px; height: 16px; border-radius: 50%; background: conic-gradient(from -30deg, currentColor 0 60deg, var(--ink) 60deg); border: 2px solid var(--cream); }
+  .qlist .n { color: var(--muted); text-align: right; font-weight: 600; }
   .qlist .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .qlist .round-sep { display: block; font-weight: 700; padding: 14px 6px 6px; color: var(--cream-dim); border: 0; }
+  .qlist .round-sep { display: block; font-family: var(--sign); text-transform: uppercase; letter-spacing: .06em; padding: 14px 8px 6px; color: var(--gold); border: 0; font-size: 14px; }
+  .qlist .btn { min-height: 32px; padding: 3px 12px; font-size: 14px; }
 
-  table.cakes { width: 100%; border-collapse: collapse; }
-  table.cakes th, table.cakes td { padding: 6px; text-align: center; }
-  table.cakes th[scope=row] { text-align: left; font-weight: 700; }
-  table.cakes thead th { font-size: 12px; color: var(--cream-dim); font-weight: 400; }
-  .wedge-btn { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); background: transparent; }
-  .wedge-btn[aria-pressed=true] { background: var(--c); }
-  .cake-cell svg { width: 46px; height: 46px; }
-  .warn { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f4c43022; border: 1px solid #F4C430; }
+  /* Kakestykker som resultattavle */
+  .board-wrap { overflow-x: auto; }
+  table.cakes { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+  table.cakes th, table.cakes td { padding: 3px; text-align: center; }
+  table.cakes th[scope=row] { text-align: left; font-family: var(--sign); text-transform: uppercase; font-size: 15px; letter-spacing: .03em; padding-left: 12px; white-space: nowrap; }
+  table.cakes tbody tr { background: var(--ink); }
+  table.cakes tbody th:first-child { border-radius: 10px 0 0 10px; }
+  table.cakes tbody td:last-child { border-radius: 0 10px 10px 0; }
+  table.cakes thead th { font-size: 11px; line-height: 1.15; color: var(--cream); font-weight: 600; vertical-align: bottom; }
+  table.cakes thead .cat-mark { flex-direction: column; gap: 4px; }
+  .wedge-btn { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #2c4a46; background: radial-gradient(circle at 40% 35%, #23403c, #0f2a27); transition: background 120ms; }
+  .wedge-btn:hover { border-color: var(--c); }
+  .wedge-btn[aria-pressed=true] { border-color: var(--cream); background: radial-gradient(circle at 38% 30%, color-mix(in srgb, var(--c) 70%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 70%, #000)); box-shadow: 0 0 12px color-mix(in srgb, var(--c) 70%, transparent); }
+  .tot { white-space: nowrap; }
+  .tot .flap { font-size: 18px; }
+  .cake-cell svg { width: 42px; height: 42px; }
+  .warn { margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: rgba(244, 185, 66, .12); border: 3px solid var(--gold); color: var(--warm); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-weight: 600; }
 
-  .groups { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
-  .groups div strong { font-family: var(--display); font-weight: 400; font-size: 24px; margin-right: 6px; }
+  /* Publikum */
+  .groups { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .groups div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 8px; background: var(--ink); color: var(--cream); font-weight: 600; }
+  .groups .flap { font-size: 20px; }
   .top { list-style: none; padding: 0; margin: 0; }
   .top li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
-  .top .small { font-size: 13px; padding: 6px 10px; }
+  .top li > span:nth-child(2) { font-family: var(--digits); font-weight: 900; color: var(--gold); }
+  .top .small { font-size: 13px; min-height: 32px; padding: 3px 10px; }
 
-  .login { max-width: 380px; margin: 12vh auto; padding: 0 16px; }
-  .login input { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--stage-deep); font-size: 20px; margin: 10px 0 14px; }
-  .err { color: #ffb3d3; font-weight: 700; min-height: 1.4em; }
-  a { color: var(--cream); }
+  .login { max-width: 420px; margin: 10vh auto; padding: 0 16px; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+  .login .box { width: 100%; text-align: left; }
+  .login input { width: 100%; padding: 14px; border-radius: 10px; border: 3px solid var(--ink); background: var(--warm); color: var(--ink); font-size: 22px; font-weight: 800; margin: 10px 0 14px; box-shadow: 0 0 0 3px var(--cream); }
+  .login input:focus { outline: none; box-shadow: 0 0 0 4px var(--gold); }
+  .err { color: var(--coral); font-weight: 800; min-height: 1.4em; }
+
+  /* Showkjøring */
+  .now { border-color: var(--gold); }
+  .now-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .stepno { font-family: var(--sign); font-size: 14px; text-transform: uppercase; letter-spacing: .06em; color: var(--gold); }
+  .now-title { margin: 8px 0 12px; font-family: var(--sign); font-size: 30px; line-height: 1.1; text-transform: uppercase; color: var(--warm); }
+  .cue { padding: 14px 16px; border-radius: 10px; background: var(--ink); border-left: 6px solid var(--cat, var(--gold)); font-size: 19px; line-height: 1.5; color: var(--cream); }
+  .cue .who { display: block; font-family: var(--sign); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--gold); margin-bottom: 4px; }
+  .now .facit { margin-top: 12px; display: inline-block; padding: 8px 12px; border-radius: 8px; background: var(--ink); border: 2px dashed var(--green); color: var(--muted); }
+  .now .facit strong { color: var(--green); }
+  .btn.next { width: 100%; min-height: 104px; margin-top: 18px; flex-direction: column; gap: 4px; border-width: 4px; box-shadow: inset 0 3px 0 rgba(255,255,255,.6), 0 7px 0 #6e4c0b; }
+  .btn.next:active:not(:disabled) { transform: translateY(5px); box-shadow: inset 0 3px 0 rgba(255,255,255,.6), 0 2px 0 #6e4c0b; }
+  .next-label { font-family: var(--sign); font-size: 40px; text-transform: uppercase; line-height: 1; }
+  .next-label::after { content: ' ▶'; }
+  .next-what { font-size: 16px; font-weight: 800; opacity: .8; }
+  .small-row { margin-top: 18px; }
+  .small-row .hint { font-size: 13px; }
+  .score-box { border-color: var(--cat); }
+  .score-box .teams { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 560px) { .score-box .teams { grid-template-columns: 1fr; } }
+  .team-btn { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 10px 16px; border-radius: 14px; border: 4px solid var(--cream); background: linear-gradient(180deg, #146d66, #0b5651); color: var(--warm); box-shadow: 0 0 0 2px var(--ink), 0 6px 0 2px var(--ink); cursor: pointer; }
+  .team-btn .cake { width: 70px; height: 70px; }
+  .team-btn .tn { font-family: var(--sign); font-size: 19px; text-transform: uppercase; text-align: center; line-height: 1.1; }
+  .team-btn .ts { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .team-btn.on { background: linear-gradient(180deg, #ffe08f, var(--gold) 55%, #e0a22e); color: var(--ink); box-shadow: 0 0 0 2px var(--ink), 0 3px 0 2px #6e4c0b, 0 0 24px rgba(244, 185, 66, .5); transform: translateY(3px); }
+  .team-btn.on .ts { color: var(--ink); }
+  .team-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .upcoming { margin: 0; padding: 0; list-style: none; }
+  .upcoming li { display: flex; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--line); color: var(--cream); }
+  .upcoming li:first-child { color: var(--warm); font-weight: 800; }
+  .upcoming .n { width: 28px; text-align: right; color: var(--muted); }
+  .adv-wrap { max-width: 1500px; margin: 0 auto; padding: 0 24px 40px; }
+  @media (max-width: 960px) { .adv-wrap { padding: 0 14px 30px; } }
+  .adv > summary { cursor: pointer; padding: 14px 18px; border-radius: 10px; background: var(--ink); border: 2px solid var(--line-strong); font-family: var(--sign); font-size: 15px; text-transform: uppercase; letter-spacing: .05em; color: var(--cream); }
+  .adv[open] > summary { margin-bottom: 18px; }
+  .adv-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+  @media (max-width: 960px) { .adv-grid { grid-template-columns: minmax(0, 1fr); } }
+  .adv .qlist { max-height: 460px; overflow: auto; }
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script type="module">
-import { api, syncClock, secondsLeft, h, cakeSVG, catOf, teamName, groupName, poll, store } from '/shared.js';
+import { api, syncClock, secondsLeft, h, cakeSVG, catOf, teamName, groupName, poll, store, pursuitSign, flap } from '/shared.js';
 
 const session = store('session');
 const app = document.getElementById('app');
 let pin = session.get('tp-pin');
 let data = null;
-let selected = null;
 let stopPoll = null;
 let lastError = '';
 
-const phaseNames = { lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
+const phaseNames = { intro: 'Intro', categories: 'Kategoriene', teams: 'Lagene', rules: 'Reglene', ask: 'Spørsmålet vises', finale: 'Finalen', outro: 'Avslutning', lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
 
 async function act(action, extra = {}) {
   try {
@@ -92,80 +159,146 @@ async function act(action, extra = {}) {
 function loginView() {
   const input = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'current-password', 'aria-label': 'PIN' });
   return h('form', { class: 'login', onsubmit: (e) => { e.preventDefault(); pin = input.value; session.set('tp-pin', pin); start(); } },
-    h('h1', { class: 'wordmark', style: { fontSize: '44px' } }, h('span', {}, 'Trainee'), h('span', {}, 'Pursuit')),
-    h('p', { class: 'muted' }, 'Kontrollpanel for teknisk ansvarlig. Skriv inn PIN-koden.'),
-    input,
-    h('div', { class: 'err', role: 'alert' }, lastError),
-    h('button', { class: 'btn go', type: 'submit' }, 'Logg inn'));
+    pursuitSign({ scale: 0.36 }),
+    h('section', { class: 'box' },
+      h('h2', {}, 'Kontrollrom'),
+      h('p', { style: { margin: 0 } }, 'For teknisk ansvarlig. Skriv inn PIN-koden.'),
+      input,
+      h('div', { class: 'err', role: 'alert' }, lastError),
+      h('button', { class: 'btn primary', type: 'submit', style: { width: '100%' } }, 'Logg inn')));
 }
 
-function currentBox() {
-  const st = data.state;
-  const i = selected ?? Math.max(0, st.qIndex);
-  const q = data.questions[i];
-  const cat = catOf(data.game, q.cat);
-  const isLive = st.qIndex === i;
-  const facit = q.type === 'mc' ? `${'ABCD'[q.answer]}: ${q.options[q.answer]}` : (q.answerLabel ?? `${q.answer} ${q.unit ?? ''}`);
-  const step = (label, action, activePhase, enabled = true) =>
-    h('button', { class: 'btn' + (isLive && st.phase === activePhase ? ' active go' : ''), disabled: !enabled, onclick: () => act(action, { qIndex: i }) }, label);
-  const live = isLive && st.phase === 'question'
-    ? h('div', { class: 'live' }, h('strong', { id: 'cd' }, secondsLeft(st.deadline)), ' sekunder igjen, ', h('strong', {}, data.answers), ' svar fra salen')
-    : isLive && st.phase === 'reveal'
-      ? h('div', { class: 'live' }, `${st.reveal.total} svar. Andel riktige: ` + data.game.groups.map((g) => `${g.name} ${st.reveal.stats[g.id].pct ?? '–'} %`).join(', '))
-      : null;
-  const next = data.questions[i + 1];
-  return h('section', { class: 'box' },
-    h('div', { class: 'current', style: { '--cat': cat.color } },
-      h('div', { class: 'meta' }, `${q.round}, spørsmål ${i + 1} av ${data.questions.length}, ${cat.name}`),
-      h('div', { class: 'q' }, q.text),
-      h('div', { class: 'facit' }, 'Fasit (bare synlig her): ', h('strong', {}, facit))),
-    h('div', { class: 'steps' },
-      step('1. Vis kategori', 'category', 'category'),
-      step(`2. Start ${data.game.duration} s`, 'open', 'question', isLive),
-      step('3. Vis fasit', 'reveal', 'reveal', isLive && !!st.openedAt)),
+let busy = false;
+let advOpen = false;
+
+// Hva kommer når man trykker «Neste»? (Speiler logikken på serveren.)
+function nextStepIndex() {
+  const st = data.state, plan = data.plan;
+  const cur = plan[st.step];
+  if (cur?.type === 'reveal' && data.fullCakes.length > 0) return plan.findIndex((x) => x.type === 'winner');
+  return Math.min(plan.length - 1, (st.step ?? -1) + 1);
+}
+
+async function next() {
+  if (busy) return;
+  busy = true;
+  draw();
+  await act('next', { expectStep: data.state.step ?? -1 });
+  busy = false;
+  draw();
+}
+
+// Fyll inn fasit og kallenavn i replikken når de er kjent.
+function fillCue(text, q, st) {
+  if (!q) return text;
+  const r = st.phase === 'reveal' ? st.reveal : null;
+  const plain = q.answerLabel ?? (q.type === 'mc' ? q.options[q.answer] : `${q.answer}${q.unit && q.unit !== 'årstall' ? ' ' + q.unit : ''}`);
+  return text.replace('[fasit]', plain).replace('[kallenavn]', r?.fastest?.nick ?? r?.closest?.nick ?? '[ingen i salen]');
+}
+
+function facitOf(q) {
+  return q.type === 'mc' ? `${'ABCD'[q.answer]}: ${q.options[q.answer]}` : (q.answerLabel ?? `${q.answer}${q.unit ? ' ' + q.unit : ''}`);
+}
+
+function showBox() {
+  const st = data.state, plan = data.plan;
+  const cur = plan[st.step];
+  const ni = nextStepIndex();
+  const nxt = plan[ni];
+  const atEnd = st.step >= plan.length - 1;
+  const q = cur?.qIndex != null ? data.questions[cur.qIndex] : null;
+  const cat = q && catOf(data.game, q.cat);
+  let live = null;
+  if (st.phase === 'question') live = h('div', { class: 'live' }, h('strong', { id: 'cd' }, secondsLeft(st.deadline)), ' sekunder igjen. ', h('strong', {}, data.answers), ' svar fra salen.');
+  if (st.phase === 'reveal' && st.reveal) {
+    const r = st.reveal;
+    live = h('div', { class: 'live' },
+      `${r.total} svar fra salen. `,
+      r.fastest ? ['Raskest med riktig svar: ', h('strong', { style: { fontSize: '20px' } }, r.fastest.nick), '. '] : null,
+      r.closest ? ['Nærmest i salen: ', h('strong', { style: { fontSize: '20px' } }, r.closest.nick), ` (${r.closest.value}). `] : null);
+  }
+  return h('section', { class: 'box now', style: cat ? { '--cat': cat.color } : null },
+    h('div', { class: 'now-head' },
+      h('span', { class: 'stepno' }, st.step >= 0 ? `Steg ${st.step + 1} av ${plan.length}` : 'Klar til start'),
+      cat ? h('span', { class: 'cat-sign' }, cat.name) : null),
+    h('h1', { class: 'now-title' }, cur ? cur.title : 'Showet har ikke startet'),
+    cur ? h('div', { class: 'cue' }, h('span', { class: 'who' }, 'Agne'), fillCue(cur.cue, q, st)) : h('div', { class: 'cue' }, 'Trykk NESTE for å starte introen. Sjekk først at storskjermen er åpen og at lyden er aktivert der.'),
+    q ? h('div', { class: 'facit' }, 'Fasit (bare synlig her): ', h('strong', {}, facitOf(q))) : null,
     live,
-    h('div', { class: 'row', style: { marginTop: '16px' } },
-      next ? h('button', { class: 'btn', onclick: () => { selected = i + 1; draw(); } }, `Gå til neste: ${catOf(data.game, next.cat).name} (${next.round})`) : h('span', { class: 'muted' }, 'Siste spørsmål.')));
+    st.tie ? h('div', { class: 'warn' }, 'Uavgjort! Kjør et ekstra spørsmål, og velg vinneren under «Avansert → Kakestykker».') : null,
+    h('button', { class: 'btn primary next', disabled: busy || atEnd || (st.tie && cur?.type === 'winner'), onclick: next },
+      h('span', { class: 'next-label' }, atEnd ? 'Showet er ferdig' : 'Neste'),
+      !atEnd && nxt ? h('span', { class: 'next-what' }, nxt.title) : null),
+    h('div', { class: 'row small-row' },
+      h('button', { class: 'btn', disabled: busy || (st.step ?? -1) <= 0, onclick: () => act('prev') }, 'Tilbake ett steg'),
+      h('button', { class: 'btn', onclick: () => act('musicStop') }, 'Stopp musikken'),
+      h('span', { class: 'muted hint' }, 'Tips: en presentasjonsklikker (pil høyre / Page Down) trykker også «Neste».')));
 }
 
-function listBox() {
+function scoreBox() {
   const st = data.state;
+  const cur = data.plan[st.step];
+  if (!cur || cur.type !== 'reveal') return null;
+  const q = data.questions[cur.qIndex];
+  const cat = catOf(data.game, q.cat);
+  const awarded = st.awards?.[q.id] ?? [];
+  const finale = q.round === 'Finale';
+  return h('section', { class: 'box score-box', style: { '--cat': cat.color } },
+    h('h2', {}, finale ? `Hvem var nærmest? Stykket: ${cat.name}` : `Hvem svarte riktig? Stykket: ${cat.name}`),
+    h('p', { style: { margin: '0 0 14px' } }, finale ? 'Trykk på laget som var nærmest. Har det laget allerede stykket, går det til nest nærmeste.' : 'Trykk på alle lag som hadde riktig på tavla. Trykk igjen for å angre.'),
+    h('div', { class: 'teams' }, data.game.teams.map((t) => {
+      const on = awarded.includes(t.id);
+      const already = !on && st.cakes[t.id].includes(q.cat);
+      return h('button', { class: 'team-btn' + (on ? ' on' : ''), 'aria-pressed': String(on), disabled: already, onclick: () => act('award', { team: t.id, on: !on }) },
+        cakeSVG(data.game.categories, st.cakes[t.id], t.name),
+        h('span', { class: 'tn' }, t.name),
+        h('span', { class: 'ts' }, already ? 'Har allerede stykket' : on ? 'Fikk stykket ✓' : 'Ingen poeng'));
+    })),
+    data.fullCakes.length ? h('div', { class: 'warn' }, `${data.fullCakes.map((id) => teamName(data.game, id)).join(' og ')} har full kake! Neste steg er vinnerkåringen.`) : null);
+}
+
+function upcomingBox() {
+  const st = data.state, plan = data.plan;
   const items = [];
-  let round = null;
-  data.questions.forEach((q, i) => {
-    if (q.round !== round) { round = q.round; items.push(h('li', { class: 'round-sep' }, round)); }
-    const cat = catOf(data.game, q.cat);
-    items.push(h('li', { class: (selected ?? st.qIndex) === i ? 'sel' : '' },
+  for (let i = nextStepIndex(); i < plan.length && items.length < 5; i++) items.push(h('li', {}, h('span', { class: 'n' }, i + 1), plan[i].title));
+  return h('section', { class: 'box' }, h('h2', {}, 'Det som kommer'), h('ol', { class: 'upcoming' }, items));
+}
+
+function planBox() {
+  const st = data.state;
+  return h('section', { class: 'box' },
+    h('h2', {}, 'Hopp til steg i manuset'),
+    h('p', { class: 'muted', style: { marginTop: 0 } }, 'Bare ved behov. Å hoppe til et spørsmål starter det på nytt.'),
+    h('ol', { class: 'qlist' }, data.plan.map((p, i) => h('li', { class: i === st.step ? 'sel' : '' },
       h('span', { class: 'n' }, i + 1),
-      h('span', { class: 'dot', style: { background: cat.color } }),
-      h('span', { class: 't', title: q.text }, q.text),
-      h('button', { class: 'btn', style: { padding: '6px 10px' }, onclick: () => { selected = i; draw(); } }, st.qIndex === i ? 'Aktiv' : 'Velg')));
-  });
-  return h('section', { class: 'box' }, h('h2', {}, 'Alle spørsmål'), h('ul', { class: 'qlist' }, items));
+      h('span', { class: 'dot', style: { color: p.qIndex != null ? catOf(data.game, data.questions[p.qIndex].cat).color : 'var(--cream)' } }),
+      h('span', { class: 't', title: p.title }, p.title),
+      h('button', { class: 'btn', onclick: (e) => confirmThen(e.currentTarget, 'Bekreft', () => act('goto', { step: i })) }, i === st.step ? 'Nå' : 'Gå hit')))));
 }
 
 function cakesBox() {
   const st = data.state;
   const g = data.game;
   const table = h('table', { class: 'cakes' },
-    h('thead', {}, h('tr', {}, h('th', {}, ''), g.categories.map((c) => h('th', { scope: 'col' }, c.name)), h('th', {}, ''))),
+    h('thead', {}, h('tr', {}, h('th', {}, ''), g.categories.map((c) => h('th', { scope: 'col' }, h('span', { class: 'cat-mark', style: { '--cat': c.color } }, c.name))), h('th', { scope: 'col' }, 'Sum'), h('th', {}, ''))),
     h('tbody', {}, g.teams.map((t) => h('tr', {},
       h('th', { scope: 'row' }, t.name),
       g.categories.map((c) => {
         const on = st.cakes[t.id].includes(c.id);
         return h('td', {}, h('button', { class: 'wedge-btn', style: { '--c': c.color }, 'aria-pressed': String(on), 'aria-label': `${t.name}: ${c.name}`, title: `${t.name}: ${c.name}`, onclick: () => act('wedge', { team: t.id, cat: c.id, on: !on }) }));
       }),
+      h('td', { class: 'tot' }, flap(`${st.cakes[t.id].length}/${g.categories.length}`)),
       h('td', { class: 'cake-cell' }, cakeSVG(g.categories, st.cakes[t.id], t.name))))));
   const full = data.fullCakes;
   const warn = full.length === 1
-    ? h('div', { class: 'warn' }, `${teamName(g, full[0])} har full kake. `, h('button', { class: 'btn go', onclick: () => act('winner', { team: full[0] }) }, `Kår ${teamName(g, full[0])} som vinner`))
+    ? h('div', { class: 'warn' }, `${teamName(g, full[0])} har full kake. `, h('button', { class: 'btn primary', onclick: () => act('winner', { team: full[0] }) }, `Kår ${teamName(g, full[0])} som vinner`))
     : full.length > 1
       ? h('div', { class: 'warn' }, `${full.map((id) => teamName(g, id)).join(' og ')} har full kake samtidig. Bruk et tiebreak-spørsmål, og kår vinneren under.`, h('div', { class: 'row', style: { marginTop: '10px' } }, full.map((id) => h('button', { class: 'btn', onclick: () => act('winner', { team: id }) }, `Kår ${teamName(g, id)}`))))
       : null;
   return h('section', { class: 'box' },
     h('h2', {}, 'Kakestykker'),
     h('p', { class: 'muted', style: { marginTop: 0 } }, 'Trykk på en farge for å gi eller ta bort et stykke. Storskjermen oppdateres når kakestillingen vises.'),
-    table, warn,
+    h('div', { class: 'board-wrap' }, table), warn,
     h('div', { class: 'row', style: { marginTop: '14px' } }, h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Vis kakestillingen på skjermen')));
 }
 
@@ -174,7 +307,7 @@ function audienceBox() {
   const total = Object.values(data.players).reduce((a, b) => a + b, 0);
   return h('section', { class: 'box' },
     h('h2', {}, `Publikum (${total} med)`),
-    h('div', { class: 'groups' }, g.groups.map((gr) => h('div', {}, h('strong', {}, data.players[gr.id]), gr.name))),
+    h('div', { class: 'groups' }, g.groups.map((gr) => h('div', {}, flap(data.players[gr.id]), gr.name))),
     h('p', { class: 'muted', style: { margin: '6px 0 10px' } }, 'Topp 10. Sjekk kallenavnene før topplisten vises, og fjern upassende navn.'),
     data.top.length
       ? h('ol', { class: 'top' }, data.top.map((p) => h('li', {},
@@ -188,6 +321,7 @@ function audienceBox() {
 
 function confirmThen(btn, label, fn) {
   if (btn.dataset.sure) return fn();
+  btn.dataset.orig ??= btn.textContent;
   btn.dataset.sure = '1'; btn.textContent = label;
   setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = btn.dataset.orig ?? btn.textContent; } }, 4000);
 }
@@ -205,18 +339,27 @@ function adminBox() {
 function draw() {
   if (!pin || !data) { app.replaceChildren(loginView()); return; }
   const st = data.state;
+  const cur = data.plan[st.step];
+  const adv = h('details', { class: 'adv', open: advOpen, ontoggle: (e) => { advOpen = e.currentTarget.open; } },
+    h('summary', {}, 'Avansert: kakestykker, publikum, manus og nullstilling'),
+    h('div', { class: 'adv-grid' }, h('div', {}, cakesBox(), audienceBox()), h('div', {}, planBox(), adminBox())));
   app.replaceChildren(
     h('header', {},
-      h('div', { class: 'mark' }, 'Trainee Pursuit, kontroll'),
-      h('div', { class: 'phase-now' }, 'Storskjermen viser: ', h('strong', {}, phaseNames[st.phase] ?? st.phase)),
-      h('div', { class: 'row' },
-        h('button', { class: 'btn' + (st.phase === 'lobby' ? ' go' : ''), onclick: () => act('lobby') }, 'Velkomst og QR'),
-        h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Kakestilling'))),
+      h('div', { class: 'brand' }, pursuitSign({ scale: 0.12, bulbs: false }), h('small', {}, 'Kontrollrom')),
+      h('div', { class: 'phase-now' }, 'På storskjermen: ', h('strong', {}, cur ? cur.title : (phaseNames[st.phase] ?? st.phase))),
+      h('a', { href: '/skjerm', target: '_blank', class: 'btn' }, 'Åpne storskjermen')),
     lastError ? h('div', { class: 'err', role: 'alert', style: { padding: '12px 24px' } }, lastError) : '',
     h('div', { class: 'layout' },
-      h('div', {}, currentBox(), listBox()),
-      h('div', {}, cakesBox(), audienceBox(), adminBox())));
+      h('div', {}, showBox(), scoreBox()),
+      h('div', {}, upcomingBox())),
+    h('div', { class: 'adv-wrap' }, adv));
 }
+
+// Presentasjonsklikker / tastatur: pil høyre eller Page Down = Neste.
+addEventListener('keydown', (e) => {
+  if (!data || e.target.closest?.('input, textarea')) return;
+  if (['ArrowRight', 'PageDown'].includes(e.key)) { e.preventDefault(); next(); }
+});
 
 setInterval(() => { const c = document.getElementById('cd'); if (c && data) c.textContent = secondsLeft(data.state.deadline); }, 250);
 

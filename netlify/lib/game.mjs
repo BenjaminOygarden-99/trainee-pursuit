@@ -1,5 +1,6 @@
 import { game, questions } from './questions.mjs';
 import { getGameStore } from './store.mjs';
+import { plan } from './show.mjs';
 
 const STATE_KEY = 'state';
 const SCORES_KEY = 'scores';
@@ -24,7 +25,12 @@ const answerLabel = (q) => q.answerLabel ?? (q.type === 'mc' ? q.options[q.answe
 
 function initialState() {
   return {
-    phase: 'lobby', // lobby | category | question | reveal | board | leaderboard | winner
+    phase: 'lobby', // intro | categories | teams | rules | lobby | ask | category | question | reveal | board | finale | winner | leaderboard | outro
+    step: -1, // posisjon i showmanuset (show.mjs)
+    teamsShown: 0,
+    awards: {}, // qid -> lag som fikk kakestykke på akkurat dette spørsmålet
+    tie: false,
+    musicStop: 0,
     qIndex: -1,
     openedAt: null,
     deadline: null,
@@ -60,7 +66,7 @@ async function countAnswers(store, qid) {
 }
 
 function publicQuestion(q, index, phase) {
-  const base = { id: q.id, n: index + 1, round: q.round, cat: q.cat };
+  const base = { id: q.id, n: index + 1, round: q.round, cat: q.cat, inRound: questions.filter((x) => x.round === q.round).indexOf(q) + 1, roundSize: questions.filter((x) => x.round === q.round).length };
   if (phase === 'category') return base;
   return { ...base, type: q.type, text: q.text, options: q.options ?? null, unit: q.unit ?? null };
 }
@@ -81,11 +87,19 @@ async function publicState(store) {
     totalQuestions: questions.length,
     cakes: s.cakes,
     winner: s.winner,
+    step: s.step ?? -1,
+    totalSteps: plan.length,
+    teamsShown: s.teamsShown ?? 0,
+    tie: !!s.tie,
+    musicStop: s.musicStop ?? 0,
+    awards: q ? (s.awards?.[q.id] ?? []) : [],
     players: await countPlayers(store),
   };
-  if (q && ['category', 'question', 'reveal'].includes(s.phase)) {
+  if (q && ['ask', 'category', 'question', 'reveal'].includes(s.phase)) {
     out.question = publicQuestion(q, s.qIndex, s.phase);
-    if (s.phase !== 'category') {
+    out.audienceOpen = q.round !== 'Finale' || game.audienceInFinale !== false;
+    if (s.phase === 'ask') out.duration = game.duration;
+    if (s.phase !== 'category' && s.phase !== 'ask') {
       out.duration = game.duration;
       out.deadline = s.deadline;
       out.answers = await countAnswers(store, q.id);
@@ -111,6 +125,7 @@ async function answer(store, body) {
   const q = questions[s.qIndex];
   if (s.phase !== 'question' || !q || q.id !== body.qid) return fail(409, 'Spørsmålet er ikke åpent lenger.');
   if (Date.now() > s.deadline + GRACE_MS) return fail(409, 'Tiden er ute.');
+  if (q.round === 'Finale' && game.audienceInFinale === false) return fail(409, 'I finalen svarer bare lagene.');
   const { id, group } = body;
   if (typeof id !== 'string' || !game.groups.some((g) => g.id === group)) return fail(400, 'Ugyldig spiller.');
   const player = await store.get(`p/${group}/${id}`, { type: 'json' });
@@ -231,6 +246,62 @@ async function topList(store, n) {
     .slice(0, n);
 }
 
+
+// ---------- showmanuset ----------
+function leaders(cakes) {
+  const counts = game.teams.map((t) => ({ id: t.id, n: (cakes[t.id] ?? []).length }));
+  const top = Math.max(...counts.map((c) => c.n));
+  return counts.filter((c) => c.n === top && top > 0).map((c) => c.id);
+}
+
+async function applyStep(store, s, index) {
+  const step = plan[index];
+  if (!step) return false;
+  s.step = index;
+  s.tie = false;
+  switch (step.type) {
+    case 'teams':
+      s.phase = 'teams';
+      s.teamsShown = step.n;
+      break;
+    case 'ask':
+      Object.assign(s, { phase: 'ask', qIndex: step.qIndex, openedAt: null, deadline: null, reveal: null });
+      break;
+    case 'question': {
+      const now = Date.now();
+      Object.assign(s, { phase: 'question', qIndex: step.qIndex, openedAt: now, deadline: now + game.duration * 1000, reveal: null });
+      break;
+    }
+    case 'reveal':
+      s.qIndex = step.qIndex;
+      if (!s.openedAt) { s.openedAt = Date.now(); s.deadline = s.openedAt; }
+      s.reveal = await computeReveal(store, s);
+      s.phase = 'reveal';
+      break;
+    case 'winner': {
+      const l = leaders(s.cakes);
+      if (l.length === 1) { s.winner = l[0]; s.phase = 'winner'; }
+      else { s.winner = null; s.tie = true; s.phase = 'board'; }
+      break;
+    }
+    case 'leaderboard':
+      s.leaderboard = await topList(store, 5);
+      s.phase = 'leaderboard';
+      break;
+    default:
+      s.phase = step.type; // intro, categories, rules, lobby, board, finale, outro
+  }
+  return true;
+}
+
+// Neste steg. Har et lag full kake etter en fasit, hopper showet rett til vinnerkåringen.
+function nextIndex(s) {
+  const cur = plan[s.step];
+  if (cur?.type === 'reveal' && fullCakes(s.cakes).length > 0) return plan.findIndex((x) => x.type === 'winner');
+  if (cur?.type === 'winner' && s.tie) return s.step; // venter på at noen kårer vinneren manuelt
+  return Math.min(plan.length - 1, (s.step ?? -1) + 1);
+}
+
 // ---------- kontrollpanel ----------
 function checkPin(req) {
   const expected = process.env.ADMIN_PIN;
@@ -248,8 +319,53 @@ async function admin(store, req, body) {
   switch (body.action) {
     case 'state':
       break;
+    case 'next': {
+      if (body.expectStep != null && body.expectStep !== (s.step ?? -1)) break; // dobbelttrykk: ignorer
+      const to = nextIndex(s);
+      if (to === s.step && plan[to]?.type === 'winner') return fail(409, 'Uavgjort: velg vinneren under «Avansert».');
+      await applyStep(store, s, to);
+      await saveState(store, s);
+      break;
+    }
+    case 'prev':
+      if ((s.step ?? -1) <= 0) break;
+      await applyStep(store, s, s.step - 1);
+      await saveState(store, s);
+      break;
+    case 'goto':
+      if (!(await applyStep(store, s, Number(body.step)))) return fail(400, 'Ukjent steg.');
+      await saveState(store, s);
+      break;
+    case 'award': {
+      // Gi/ta bort kakestykket for spørsmålet som vises nå. Rører aldri stykker vunnet tidligere.
+      if (!q) return fail(400, 'Ingen spørsmål er aktivt.');
+      const team = body.team;
+      if (!s.cakes[team]) return fail(400, 'Ukjent lag.');
+      s.awards ??= {};
+      const list = new Set(s.awards[q.id] ?? []);
+      const has = s.cakes[team].includes(q.cat);
+      if (body.on) {
+        if (has && !list.has(team)) return fail(409, `${game.teams.find((t) => t.id === team).name} har allerede dette kakestykket.`);
+        list.add(team);
+        if (!has) s.cakes[team] = game.categories.map((c) => c.id).filter((id) => id === q.cat || s.cakes[team].includes(id));
+      } else if (list.has(team)) {
+        list.delete(team);
+        s.cakes[team] = s.cakes[team].filter((id) => id !== q.cat);
+      }
+      s.awards[q.id] = [...list];
+      await saveState(store, s);
+      break;
+    }
+    case 'musicStop':
+      s.musicStop = (s.musicStop ?? 0) + 1;
+      await saveState(store, s);
+      break;
     case 'lobby':
       s.phase = 'lobby';
+      await saveState(store, s);
+      break;
+    case 'intro':
+      s.phase = 'intro';
       await saveState(store, s);
       break;
     case 'category': {
@@ -293,7 +409,9 @@ async function admin(store, req, body) {
     case 'winner':
       if (!s.cakes[body.team]) return fail(400, 'Ukjent lag.');
       s.winner = body.team;
+      s.tie = false;
       s.phase = 'winner';
+      s.step = plan.findIndex((x) => x.type === 'winner');
       await saveState(store, s);
       break;
     case 'kick': {
@@ -324,6 +442,7 @@ async function admin(store, req, body) {
     state: fresh,
     questions,
     game,
+    plan,
     players: await countPlayers(store),
     answers: cq ? await countAnswers(store, cq.id) : 0,
     top: await topList(store, 10),
