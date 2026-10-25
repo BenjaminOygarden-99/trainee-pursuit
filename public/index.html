@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1d1c4f">
+<title>Trainee Pursuit – spill med</title>
+<link rel="stylesheet" href="/shared.css">
+<style>
+  body { min-height: 100svh; }
+  main { max-width: 480px; margin: 0 auto; padding: 28px 18px 40px; min-height: 100svh; display: flex; flex-direction: column; }
+  .top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; min-height: 40px; }
+  .top .mark { font-family: var(--display); font-size: 20px; line-height: 1; }
+  .top .who { font-size: 15px; color: var(--cream-dim); text-align: right; }
+  .wordmark { font-size: 64px; margin: 24px 0 8px; }
+  .lead { font-size: 18px; color: var(--cream-dim); margin: 0 0 32px; }
+  label.field { display: block; font-weight: 700; margin-bottom: 8px; }
+  input[type=text], input[inputmode] { width: 100%; padding: 16px 18px; border-radius: 14px; border: 2px solid var(--line); background: var(--stage-deep); font-size: 22px; }
+  input:focus { border-color: var(--cream); outline: none; }
+  fieldset { border: 0; padding: 0; margin: 28px 0 0; }
+  legend { font-weight: 700; margin-bottom: 10px; }
+  .choice { display: block; position: relative; margin-bottom: 10px; }
+  .choice input { position: absolute; opacity: 0; }
+  .choice span { display: block; padding: 16px 18px; border-radius: 14px; border: 2px solid var(--line); font-size: 19px; font-weight: 700; }
+  .choice input:checked + span { background: var(--cream); color: var(--stage); border-color: var(--cream); }
+  .choice input:focus-visible + span { outline: 3px solid var(--cream); outline-offset: 3px; }
+  .primary { margin-top: 28px; width: 100%; padding: 18px; border: 0; border-radius: 14px; background: var(--cream); color: var(--stage); font-family: var(--display); font-size: 24px; }
+  .primary:disabled { opacity: .5; }
+  .note { font-size: 14px; color: var(--cream-dim); margin-top: 16px; }
+  .error { color: #ffb3d3; font-weight: 700; margin-top: 14px; min-height: 1.4em; }
+
+  .center { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+  .big { font-family: var(--display); font-size: 40px; line-height: 1; margin: 0 0 14px; }
+  .center p { font-size: 18px; color: var(--cream-dim); margin: 0; }
+  .catline { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--cat); }
+  .catline::before { content: ''; width: 16px; height: 16px; border-radius: 50%; background: var(--cat); }
+
+  .qcard { border-left: 8px solid var(--cat); padding-left: 16px; margin-bottom: 22px; }
+  .qcard h1 { font-size: 22px; line-height: 1.3; margin: 8px 0 0; }
+  .clock { font-family: var(--display); font-size: 22px; }
+  .answers { display: grid; gap: 12px; }
+  .ans { display: flex; align-items: center; gap: 14px; text-align: left; width: 100%; padding: 16px; min-height: 68px; border: 0; border-radius: 16px; background: var(--cream); color: var(--stage); font-size: 19px; font-weight: 700; }
+  .ans .letter { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--stage); color: var(--cream); display: grid; place-items: center; font-family: var(--display); }
+  .ans:active { transform: scale(.98); }
+  .ans:disabled { opacity: .5; }
+  .result { font-family: var(--display); font-size: 56px; line-height: 1; margin-bottom: 10px; }
+  .result.ok { color: var(--ok); }
+  .result.no { color: var(--bad); }
+  .stat { font-size: 20px; margin-top: 10px; }
+  .stat strong { font-family: var(--display); font-weight: 400; }
+  .link { background: none; border: 0; color: var(--cream-dim); text-decoration: underline; margin-top: 40px; font-size: 14px; }
+</style>
+</head>
+<body>
+<main id="app" aria-live="polite"></main>
+<script type="module">
+import { api, syncClock, now, secondsLeft, h, catOf, LETTERS, poll, store } from '/shared.js';
+
+const local = store('local');
+const app = document.getElementById('app');
+let me = local.get('tp-me');            // { id, nick, group }
+let answered = local.get('tp-answered') ?? {}; // qid -> visningstekst
+let st = null;
+let shownKey = '';
+let myResult = null; let resultFor = null;
+let busy = false;
+// Svar huskes per åpning av spørsmålet (frist), slik at en nullstilling ikke låser telefonen.
+const akey = () => `${st.question.id}@${st.deadline}`;
+
+const top = () => h('div', { class: 'top' },
+  h('div', { class: 'mark' }, 'Trainee Pursuit'),
+  me ? h('div', { class: 'who' }, me.nick) : null);
+
+function joinView(game, errorText = '') {
+  const err = h('div', { class: 'error', role: 'alert' }, errorText);
+  const nick = h('input', { type: 'text', id: 'nick', maxlength: 20, autocomplete: 'nickname', required: true, placeholder: 'For eksempel Kakemonsteret' });
+  const btn = h('button', { class: 'primary', type: 'submit' }, 'Bli med');
+  const form = h('form', { onsubmit: async (e) => {
+      e.preventDefault();
+      const group = form.querySelector('input[name=group]:checked')?.value;
+      if (!nick.value.trim()) { err.textContent = 'Skriv inn et kallenavn.'; nick.focus(); return; }
+      if (!group) { err.textContent = 'Velg hvilken gruppe du hører til.'; return; }
+      btn.disabled = true;
+      try {
+        me = await api('join', { method: 'POST', body: { nick: nick.value, group } });
+        local.set('tp-me', me);
+        shownKey = ''; draw();
+      } catch (x) { err.textContent = x.message; btn.disabled = false; }
+    } },
+    h('label', { class: 'field', for: 'nick' }, 'Kallenavn'),
+    nick,
+    h('fieldset', {}, h('legend', {}, 'Jeg er …'),
+      game.groups.map((g) => h('label', { class: 'choice' }, h('input', { type: 'radio', name: 'group', value: g.id }), h('span', {}, g.name)))),
+    err, btn,
+    h('p', { class: 'note' }, 'Vi lagrer bare kallenavnet og gruppen, og sletter alt etter arrangementet. Kallenavnet kan vises på storskjermen, så bruk et du er komfortabel med.'));
+  return [h('h1', { class: 'wordmark' }, h('span', {}, 'Trainee'), h('span', {}, 'Pursuit')),
+    h('p', { class: 'lead' }, 'Svar på de samme spørsmålene som lagene på scenen. Raske, riktige svar gir mest poeng.'),
+    form];
+}
+
+function waitView(title, text, cat) {
+  return [top(), h('div', { class: 'center', style: cat ? { '--cat': cat.color } : null },
+    cat ? h('div', {}, h('span', { class: 'catline' }, cat.name)) : null,
+    h('p', { class: 'big', style: { color: 'var(--cream)', marginTop: cat ? '16px' : 0 } }, title),
+    h('p', {}, text))];
+}
+
+async function send(payload, label) {
+  if (busy) return;
+  busy = true;
+  app.querySelectorAll('button, input').forEach((b) => (b.disabled = true));
+  try {
+    await api('answer', { method: 'POST', body: { id: me.id, group: me.group, qid: st.question.id, ...payload } });
+    answered[akey()] = label;
+  } catch (x) {
+    if (x.status === 403) { me = null; local.del('tp-me'); }
+    else if (/allerede/.test(x.message)) answered[akey()] = answered[akey()] ?? 'Registrert';
+    else alertLine(x.message);
+  } finally {
+    busy = false;
+    local.set('tp-answered', answered);
+    shownKey = ''; draw();
+  }
+}
+function alertLine(msg) { const e = app.querySelector('.error'); if (e) e.textContent = msg; }
+
+function questionView() {
+  const q = st.question;
+  const cat = catOf(st.game, q.cat);
+  const clock = h('span', { class: 'clock', id: 'clock' }, secondsLeft(st.deadline));
+  const head = h('div', { class: 'qcard', style: { '--cat': cat.color } },
+    h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }, h('span', { class: 'catline' }, cat.name), clock),
+    h('h1', {}, q.text));
+  if (q.type === 'mc') {
+    return [top(), head, h('div', { class: 'answers' }, q.options.map((o, i) =>
+      h('button', { class: 'ans', onclick: () => send({ choice: i }, `${LETTERS[i]}: ${o}`) }, h('span', { class: 'letter' }, LETTERS[i]), o))),
+      h('div', { class: 'error', role: 'alert' })];
+  }
+  const input = h('input', { inputmode: 'decimal', id: 'num', autocomplete: 'off', 'aria-label': `Svar${q.unit ? ' i ' + q.unit : ''}`, placeholder: q.unit ? `Svar (${q.unit})` : 'Ditt tall' });
+  return [top(), head,
+    h('form', { onsubmit: (e) => { e.preventDefault(); if (input.value.trim()) send({ value: input.value }, `${input.value}${q.unit && q.unit !== 'årstall' ? ' ' + q.unit : ''}`); } },
+      input, h('div', { class: 'error', role: 'alert' }), h('button', { class: 'primary', type: 'submit' }, 'Send svar'))];
+}
+
+async function revealView() {
+  const q = st.question;
+  const cat = catOf(st.game, q.cat);
+  if (resultFor !== q.id) {
+    try { myResult = await api(`me?id=${encodeURIComponent(me.id)}`); } catch { myResult = null; }
+    resultFor = q.id;
+  }
+  const mine = answered[akey()];
+  const last = myResult?.last;
+  const head = !mine ? h('div', { class: 'result' }, 'Ikke svart')
+    : last?.correct ? h('div', { class: 'result ok' }, q.type === 'mc' ? 'Riktig!' : 'Godt gjettet!')
+    : h('div', { class: 'result no' }, q.type === 'mc' ? 'Feil' : 'Et stykke unna');
+  return [top(), h('div', { class: 'center', style: { '--cat': cat.color } },
+    head,
+    h('p', {}, `Riktig svar: ${st.reveal.answerLabel}`),
+    mine ? h('p', { style: { marginTop: '6px' } }, `Du svarte ${mine}`) : null,
+    last ? h('div', { class: 'stat' }, `+${last.points} poeng`) : null,
+    myResult?.rank ? h('div', { class: 'stat' }, 'Totalt ', h('strong', {}, myResult.total.toLocaleString('nb-NO')), ` poeng, nr. ${myResult.rank} av ${myResult.of}`) : null)];
+}
+
+async function draw() {
+  if (!st) return;
+  if (!me) {
+    if (shownKey !== 'join') { shownKey = 'join'; app.replaceChildren(...joinView(st.game)); }
+    return;
+  }
+  const q = st.question;
+  const open = st.phase === 'question' && now() < st.deadline + 1000;
+  const key = `${st.rev}|${st.phase}|${q?.id}|${open}|${answered[q ? akey() : ''] ?? ''}`;
+  if (key === shownKey) {
+    const c = document.getElementById('clock'); if (c) c.textContent = secondsLeft(st.deadline);
+    return;
+  }
+  shownKey = key;
+  let nodes;
+  const cat = q && catOf(st.game, q.cat);
+  switch (st.phase) {
+    case 'category':
+      nodes = waitView('Gjør deg klar', `${q.round}, spørsmål ${q.n}. Spørsmålet kommer straks.`, cat); break;
+    case 'question':
+      if (answered[akey()]) nodes = waitView('Svaret er registrert', `Du svarte ${answered[akey()]}. Følg med på storskjermen.`, cat);
+      else if (!open) nodes = waitView('Tiden er ute', 'Fasiten kommer på storskjermen.', cat);
+      else nodes = questionView();
+      break;
+    case 'reveal': nodes = await revealView(); break;
+    case 'board': nodes = waitView('Kakestillingen', 'Se på storskjermen hvem som leder.'); break;
+    case 'leaderboard': nodes = waitView('Toppliste', 'Er du blant de fem beste i salen?'); break;
+    case 'winner': nodes = waitView('Takk for at du spilte!', myResult?.rank ? `Du endte som nr. ${myResult.rank} av ${myResult.of}.` : 'Vi ses på neste Høstbord.'); break;
+    default: nodes = waitView(`Du er med, ${me.nick}`, 'Første spørsmål kommer på storskjermen snart. Hold mobilen klar.');
+  }
+  app.replaceChildren(...nodes,
+    h('button', { class: 'link', onclick: () => { if (!confirmLeave()) return; me = null; local.del('tp-me'); shownKey = ''; draw(); } }, 'Bytt kallenavn'));
+}
+function confirmLeave() {
+  const b = app.querySelector('.link');
+  if (b.dataset.sure) return true;
+  b.dataset.sure = '1'; b.textContent = 'Trykk igjen for å starte på nytt (poengene dine forsvinner)';
+  return false;
+}
+
+setInterval(() => { if (st?.phase === 'question') draw(); }, 500);
+
+poll(async () => {
+  st = await api('state');
+  syncClock(st.serverNow);
+  await draw();
+}, 1500);
+</script>
+</body>
+</html>

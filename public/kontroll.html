@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Trainee Pursuit – kontrollpanel</title>
+<link rel="stylesheet" href="/shared.css">
+<style>
+  body { font-size: 16px; }
+  header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 16px 24px; background: var(--stage-deep); border-bottom: 1px solid var(--line); }
+  header .mark { font-family: var(--display); font-size: 22px; }
+  .phase-now { font-size: 15px; color: var(--cream-dim); }
+  .phase-now strong { color: var(--cream); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; padding: 24px; max-width: 1500px; margin: 0 auto; }
+  @media (max-width: 960px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
+  section.box { background: var(--stage-deep); border: 1px solid var(--line); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+  h2 { font-size: 18px; margin: 0 0 14px; }
+  .btn { padding: 11px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--stage-lift); font-weight: 700; }
+  .btn:hover { border-color: var(--cream-dim); }
+  .btn.go { background: var(--cream); color: var(--stage); border-color: var(--cream); }
+  .btn.danger { background: transparent; color: #ffb3d3; border-color: #ffb3d3; }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+  .current { border-left: 8px solid var(--cat, var(--line)); padding-left: 16px; }
+  .current .meta { color: var(--cream-dim); font-size: 14px; }
+  .current .q { font-size: 20px; font-weight: 700; margin: 6px 0 10px; }
+  .current .facit { background: var(--stage-lift); padding: 8px 12px; border-radius: 8px; display: inline-block; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 18px; }
+  .steps .btn { padding: 16px 10px; }
+  .steps .btn.active { outline: 3px solid var(--cream); }
+  .live { margin-top: 14px; font-size: 18px; }
+  .live strong { font-family: var(--display); font-weight: 400; font-size: 26px; }
+
+  .qlist { list-style: none; margin: 0; padding: 0; }
+  .qlist li { display: grid; grid-template-columns: 28px 14px 1fr auto; gap: 10px; align-items: center; padding: 9px 6px; border-bottom: 1px solid var(--line); }
+  .qlist li.sel { background: var(--stage-lift); border-radius: 8px; }
+  .qlist .dot { width: 14px; height: 14px; border-radius: 50%; }
+  .qlist .n { color: var(--cream-dim); text-align: right; }
+  .qlist .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qlist .round-sep { display: block; font-weight: 700; padding: 14px 6px 6px; color: var(--cream-dim); border: 0; }
+
+  table.cakes { width: 100%; border-collapse: collapse; }
+  table.cakes th, table.cakes td { padding: 6px; text-align: center; }
+  table.cakes th[scope=row] { text-align: left; font-weight: 700; }
+  table.cakes thead th { font-size: 12px; color: var(--cream-dim); font-weight: 400; }
+  .wedge-btn { width: 40px; height: 40px; border-radius: 10px; border: 2px solid var(--c); background: transparent; }
+  .wedge-btn[aria-pressed=true] { background: var(--c); }
+  .cake-cell svg { width: 46px; height: 46px; }
+  .warn { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #f4c43022; border: 1px solid #F4C430; }
+
+  .groups { display: flex; gap: 18px; flex-wrap: wrap; margin-bottom: 12px; }
+  .groups div strong { font-family: var(--display); font-weight: 400; font-size: 24px; margin-right: 6px; }
+  .top { list-style: none; padding: 0; margin: 0; }
+  .top li { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .top .small { font-size: 13px; padding: 6px 10px; }
+
+  .login { max-width: 380px; margin: 12vh auto; padding: 0 16px; }
+  .login input { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid var(--line); background: var(--stage-deep); font-size: 20px; margin: 10px 0 14px; }
+  .err { color: #ffb3d3; font-weight: 700; min-height: 1.4em; }
+  a { color: var(--cream); }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { api, syncClock, secondsLeft, h, cakeSVG, catOf, teamName, groupName, poll, store } from '/shared.js';
+
+const session = store('session');
+const app = document.getElementById('app');
+let pin = session.get('tp-pin');
+let data = null;
+let selected = null;
+let stopPoll = null;
+let lastError = '';
+
+const phaseNames = { lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
+
+async function act(action, extra = {}) {
+  try {
+    data = await api('admin', { method: 'POST', pin, body: { action, ...extra } });
+    syncClock(data.serverNow);
+    lastError = '';
+  } catch (e) {
+    if (e.status === 401) { pin = null; session.del('tp-pin'); lastError = e.message; stopPoll?.(); }
+    else lastError = e.message;
+  }
+  draw();
+}
+
+function loginView() {
+  const input = h('input', { type: 'password', inputmode: 'numeric', autocomplete: 'current-password', 'aria-label': 'PIN' });
+  return h('form', { class: 'login', onsubmit: (e) => { e.preventDefault(); pin = input.value; session.set('tp-pin', pin); start(); } },
+    h('h1', { class: 'wordmark', style: { fontSize: '44px' } }, h('span', {}, 'Trainee'), h('span', {}, 'Pursuit')),
+    h('p', { class: 'muted' }, 'Kontrollpanel for teknisk ansvarlig. Skriv inn PIN-koden.'),
+    input,
+    h('div', { class: 'err', role: 'alert' }, lastError),
+    h('button', { class: 'btn go', type: 'submit' }, 'Logg inn'));
+}
+
+function currentBox() {
+  const st = data.state;
+  const i = selected ?? Math.max(0, st.qIndex);
+  const q = data.questions[i];
+  const cat = catOf(data.game, q.cat);
+  const isLive = st.qIndex === i;
+  const facit = q.type === 'mc' ? `${'ABCD'[q.answer]}: ${q.options[q.answer]}` : (q.answerLabel ?? `${q.answer} ${q.unit ?? ''}`);
+  const step = (label, action, activePhase, enabled = true) =>
+    h('button', { class: 'btn' + (isLive && st.phase === activePhase ? ' active go' : ''), disabled: !enabled, onclick: () => act(action, { qIndex: i }) }, label);
+  const live = isLive && st.phase === 'question'
+    ? h('div', { class: 'live' }, h('strong', { id: 'cd' }, secondsLeft(st.deadline)), ' sekunder igjen, ', h('strong', {}, data.answers), ' svar fra salen')
+    : isLive && st.phase === 'reveal'
+      ? h('div', { class: 'live' }, `${st.reveal.total} svar. Andel riktige: ` + data.game.groups.map((g) => `${g.name} ${st.reveal.stats[g.id].pct ?? '–'} %`).join(', '))
+      : null;
+  const next = data.questions[i + 1];
+  return h('section', { class: 'box' },
+    h('div', { class: 'current', style: { '--cat': cat.color } },
+      h('div', { class: 'meta' }, `${q.round}, spørsmål ${i + 1} av ${data.questions.length}, ${cat.name}`),
+      h('div', { class: 'q' }, q.text),
+      h('div', { class: 'facit' }, 'Fasit (bare synlig her): ', h('strong', {}, facit))),
+    h('div', { class: 'steps' },
+      step('1. Vis kategori', 'category', 'category'),
+      step(`2. Start ${data.game.duration} s`, 'open', 'question', isLive),
+      step('3. Vis fasit', 'reveal', 'reveal', isLive && !!st.openedAt)),
+    live,
+    h('div', { class: 'row', style: { marginTop: '16px' } },
+      next ? h('button', { class: 'btn', onclick: () => { selected = i + 1; draw(); } }, `Gå til neste: ${catOf(data.game, next.cat).name} (${next.round})`) : h('span', { class: 'muted' }, 'Siste spørsmål.')));
+}
+
+function listBox() {
+  const st = data.state;
+  const items = [];
+  let round = null;
+  data.questions.forEach((q, i) => {
+    if (q.round !== round) { round = q.round; items.push(h('li', { class: 'round-sep' }, round)); }
+    const cat = catOf(data.game, q.cat);
+    items.push(h('li', { class: (selected ?? st.qIndex) === i ? 'sel' : '' },
+      h('span', { class: 'n' }, i + 1),
+      h('span', { class: 'dot', style: { background: cat.color } }),
+      h('span', { class: 't', title: q.text }, q.text),
+      h('button', { class: 'btn', style: { padding: '6px 10px' }, onclick: () => { selected = i; draw(); } }, st.qIndex === i ? 'Aktiv' : 'Velg')));
+  });
+  return h('section', { class: 'box' }, h('h2', {}, 'Alle spørsmål'), h('ul', { class: 'qlist' }, items));
+}
+
+function cakesBox() {
+  const st = data.state;
+  const g = data.game;
+  const table = h('table', { class: 'cakes' },
+    h('thead', {}, h('tr', {}, h('th', {}, ''), g.categories.map((c) => h('th', { scope: 'col' }, c.name)), h('th', {}, ''))),
+    h('tbody', {}, g.teams.map((t) => h('tr', {},
+      h('th', { scope: 'row' }, t.name),
+      g.categories.map((c) => {
+        const on = st.cakes[t.id].includes(c.id);
+        return h('td', {}, h('button', { class: 'wedge-btn', style: { '--c': c.color }, 'aria-pressed': String(on), 'aria-label': `${t.name}: ${c.name}`, title: `${t.name}: ${c.name}`, onclick: () => act('wedge', { team: t.id, cat: c.id, on: !on }) }));
+      }),
+      h('td', { class: 'cake-cell' }, cakeSVG(g.categories, st.cakes[t.id], t.name))))));
+  const full = data.fullCakes;
+  const warn = full.length === 1
+    ? h('div', { class: 'warn' }, `${teamName(g, full[0])} har full kake. `, h('button', { class: 'btn go', onclick: () => act('winner', { team: full[0] }) }, `Kår ${teamName(g, full[0])} som vinner`))
+    : full.length > 1
+      ? h('div', { class: 'warn' }, `${full.map((id) => teamName(g, id)).join(' og ')} har full kake samtidig. Bruk et tiebreak-spørsmål, og kår vinneren under.`, h('div', { class: 'row', style: { marginTop: '10px' } }, full.map((id) => h('button', { class: 'btn', onclick: () => act('winner', { team: id }) }, `Kår ${teamName(g, id)}`))))
+      : null;
+  return h('section', { class: 'box' },
+    h('h2', {}, 'Kakestykker'),
+    h('p', { class: 'muted', style: { marginTop: 0 } }, 'Trykk på en farge for å gi eller ta bort et stykke. Storskjermen oppdateres når kakestillingen vises.'),
+    table, warn,
+    h('div', { class: 'row', style: { marginTop: '14px' } }, h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Vis kakestillingen på skjermen')));
+}
+
+function audienceBox() {
+  const g = data.game;
+  const total = Object.values(data.players).reduce((a, b) => a + b, 0);
+  return h('section', { class: 'box' },
+    h('h2', {}, `Publikum (${total} med)`),
+    h('div', { class: 'groups' }, g.groups.map((gr) => h('div', {}, h('strong', {}, data.players[gr.id]), gr.name))),
+    h('p', { class: 'muted', style: { margin: '6px 0 10px' } }, 'Topp 10. Sjekk kallenavnene før topplisten vises, og fjern upassende navn.'),
+    data.top.length
+      ? h('ol', { class: 'top' }, data.top.map((p) => h('li', {},
+          h('span', {}, p.nick, h('span', { class: 'muted' }, ` (${groupName(g, p.group)})`)),
+          h('span', {}, p.total.toLocaleString('nb-NO')),
+          h('button', { class: 'btn danger small', onclick: (e) => confirmThen(e.currentTarget, 'Bekreft', () => act('kick', { id: p.id })) }, 'Fjern'))))
+      : h('p', { class: 'muted' }, 'Ingen poeng ennå.'),
+    h('div', { class: 'row', style: { marginTop: '14px' } },
+      h('button', { class: 'btn' + (data.state.phase === 'leaderboard' ? ' go' : ''), onclick: () => act('leaderboard') }, 'Vis topp 5 i salen')));
+}
+
+function confirmThen(btn, label, fn) {
+  if (btn.dataset.sure) return fn();
+  btn.dataset.sure = '1'; btn.textContent = label;
+  setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = btn.dataset.orig ?? btn.textContent; } }, 4000);
+}
+
+function adminBox() {
+  return h('section', { class: 'box' },
+    h('h2', {}, 'Oppsett'),
+    h('div', { class: 'row' },
+      h('a', { href: '/skjerm', target: '_blank', class: 'btn' }, 'Åpne storskjermen'),
+      h('button', { class: 'btn danger', onclick: (e) => confirmThen(e.currentTarget, 'Trykk igjen: nullstill spillet', () => act('reset', { keepPlayers: true })) }, 'Nullstill spill, behold publikum'),
+      h('button', { class: 'btn danger', onclick: (e) => confirmThen(e.currentTarget, 'Trykk igjen: slett alt', () => act('reset', { keepPlayers: false })) }, 'Slett alt (etter arrangementet)')),
+    h('p', { class: 'muted', style: { marginBottom: 0 } }, 'Slett alt fjerner kallenavn, svar og poeng fra serveren.'));
+}
+
+function draw() {
+  if (!pin || !data) { app.replaceChildren(loginView()); return; }
+  const st = data.state;
+  app.replaceChildren(
+    h('header', {},
+      h('div', { class: 'mark' }, 'Trainee Pursuit, kontroll'),
+      h('div', { class: 'phase-now' }, 'Storskjermen viser: ', h('strong', {}, phaseNames[st.phase] ?? st.phase)),
+      h('div', { class: 'row' },
+        h('button', { class: 'btn' + (st.phase === 'lobby' ? ' go' : ''), onclick: () => act('lobby') }, 'Velkomst og QR'),
+        h('button', { class: 'btn' + (st.phase === 'board' ? ' go' : ''), onclick: () => act('board') }, 'Kakestilling'))),
+    lastError ? h('div', { class: 'err', role: 'alert', style: { padding: '12px 24px' } }, lastError) : '',
+    h('div', { class: 'layout' },
+      h('div', {}, currentBox(), listBox()),
+      h('div', {}, cakesBox(), audienceBox(), adminBox())));
+}
+
+setInterval(() => { const c = document.getElementById('cd'); if (c && data) c.textContent = secondsLeft(data.state.deadline); }, 250);
+
+function start() {
+  stopPoll?.();
+  stopPoll = poll(async () => {
+    // Ikke tegn på nytt mens brukeren holder på å bekrefte noe.
+    if (document.querySelector('[data-sure]')) return;
+    const scroll = scrollY;
+    await act('state');
+    scrollTo(0, scroll);
+  }, 2000);
+}
+
+if (pin) start(); else draw();
+</script>
+</body>
+</html>
