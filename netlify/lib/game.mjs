@@ -436,16 +436,22 @@ async function admin(store, req, body) {
       return fail(400, 'Ukjent handling.');
   }
 
-  const fresh = await loadState(store);
+  // Etter en endring er `s` allerede den nye tilstanden (nullstilling leses på nytt). Oppslagene kjøres samtidig.
+  const fresh = body.action === 'reset' ? await loadState(store) : s;
   const cq = questions[fresh.qIndex];
+  const [players, answers, top] = await Promise.all([
+    countPlayers(store),
+    cq ? countAnswers(store, cq.id) : 0,
+    topList(store, 10),
+  ]);
   return json({
     state: fresh,
     questions,
     game,
     plan,
-    players: await countPlayers(store),
-    answers: cq ? await countAnswers(store, cq.id) : 0,
-    top: await topList(store, 10),
+    players,
+    answers,
+    top,
     fullCakes: fullCakes(fresh.cakes),
     serverNow: Date.now(),
   });
@@ -465,6 +471,8 @@ export async function handle(req) {
       });
     }
     if (req.method === 'GET' && route === 'time') return json({ now: Date.now() }); // ukachet, for klokkesynk
+    // Storskjermen: samme tilstand, men uten CDN-cache, så skjermen skifter med en gang.
+    if (req.method === 'GET' && route === 'live') return json(await publicState(store));
     if (req.method === 'GET' && route === 'me') return me(store, url);
     if (req.method !== 'POST') return fail(404, 'Ukjent adresse.');
     const body = await req.json().catch(() => ({}));

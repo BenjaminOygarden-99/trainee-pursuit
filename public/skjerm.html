@@ -684,7 +684,7 @@ requestAnimationFrame(tick);
 let offlineEl;
 poll(async () => {
   try {
-    const st = await api('state');
+    const st = await api('live'); // ukachet: skjermen skifter med en gang du trykker NESTE
     syncClock(st.serverNow);
     current = st;
     render(st);
@@ -692,7 +692,7 @@ poll(async () => {
   } catch (e) {
     if (!offlineEl) { offlineEl = h('div', { class: 'offline' }, 'Mistet kontakt med serveren. Prøver igjen …'); stage.append(offlineEl); }
   }
-}, 1000);
+}, 250);
 </script>
 </body>
 </html>

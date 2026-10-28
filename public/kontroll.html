@@ -159,20 +159,24 @@ addEventListener('pointerdown', unlock);
 addEventListener('keydown', unlock);
 addEventListener('focus', () => { picking = false; });
 
-let lastKey = null, lastPhase = null, lastAwards = '', buzzedFor = null;
+let cuedStep = null, lastPhase = null, lastAwards = '', buzzedFor = null;
+// Lyd per steg. Kalles både optimistisk (ved trykk) og når serveren svarer, men spiller bare én gang per steg.
 function audioSync() {
   if (!data) return;
   const st = data.state;
-  const key = [st.phase, st.step, st.teamsShown, st.qIndex].join('|');
-  if (key !== lastKey) {
+  const stepKey = `${st.step}|${st.phase}`;
+  if (stepKey !== cuedStep) {
     // Ved første innlasting spilles ingenting (unngår musikk midt i en replikk ved omlasting).
-    if (lastKey !== null && audioOn) { st._left = (st.deadline - now()) / 1000; cue(audio, st.phase, lastPhase, st); }
-    lastKey = key; lastPhase = st.phase;
+    if (cuedStep !== null && audioOn) {
+      cue(audio, st.phase, lastPhase, { left: st.deadline ? (st.deadline - now()) / 1000 : undefined, duration: data.game.duration });
+    }
+    cuedStep = stepKey; lastPhase = st.phase;
   }
   const q = data.questions[st.qIndex];
-  const aw = q ? JSON.stringify(st.awards?.[q.id] ?? []) : '';
-  if (q && lastAwards && aw !== lastAwards && (st.awards?.[q.id] ?? []).length > JSON.parse(lastAwards || '[]').length && audioOn) audio.ding();
-  lastAwards = aw || '[]';
+  const list = q ? (st.awards?.[q.id] ?? []) : [];
+  const aw = JSON.stringify(list);
+  if (q && lastAwards && aw !== lastAwards && list.length > JSON.parse(lastAwards).length && audioOn) audio.ding();
+  lastAwards = aw;
 }
 
 const session = store('session');
@@ -184,9 +188,15 @@ let lastError = '';
 
 const phaseNames = { intro: 'Intro', categories: 'Kategoriene', teams: 'Lagene', rules: 'Reglene', ask: 'Spørsmålet vises', finale: 'Finalen', outro: 'Avslutning', lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
 
+let mutations = 0; // øker ved hvert trykk; svar på eldre statusforespørsler forkastes
 async function act(action, extra = {}) {
+  if (action !== 'state') mutations++;
+  const seq = mutations;
   try {
-    data = await api('admin', { method: 'POST', pin, body: { action, ...extra } });
+    const res = await api('admin', { method: 'POST', pin, body: { action, ...extra } });
+    // En rutinemessig statusoppdatering kan ikke overskrive en nyere tilstand (f.eks. fra et trykk som pågår).
+    if (action === 'state' && !extra.force && (seq !== mutations || busy || (data && res.state.rev < data.state.rev))) return;
+    data = res;
     syncClock(data.serverNow);
     lastError = '';
     audioSync();
@@ -220,12 +230,28 @@ function nextStepIndex() {
   return Math.min(plan.length - 1, (st.step ?? -1) + 1);
 }
 
+// NESTE går «på skinner»: neste steg vises og lyden starter i samme øyeblikk som du trykker.
+// Serveren bekrefter i bakgrunnen; storskjermen følger etter på et brøkdels sekund.
 async function next() {
-  if (busy) return;
-  await audio.unlock(); // NESTE er et brukertrykk: nok til at nettleseren tillater lyd
+  if (busy || !data) return;
+  if (!audio.enabled) await audio.unlock(); // første trykk: nettleseren krever et brukertrykk for lyd
+  const st = data.state, plan = data.plan;
+  const ni = nextStepIndex();
+  const step = plan[ni];
+  if (!step || ni === st.step) return;
   busy = true;
+  const fromStep = st.step ?? -1;
+  Object.assign(st, {
+    step: ni, phase: step.type, tie: false,
+    teamsShown: step.type === 'teams' ? step.n : st.teamsShown,
+    qIndex: step.qIndex ?? st.qIndex,
+    reveal: step.type === 'reveal' ? null : st.reveal,
+    deadline: step.type === 'question' ? now() + data.game.duration * 1000 : st.deadline,
+  });
+  audioSync();
   draw();
-  await act('next', { expectStep: data.state.step ?? -1 });
+  await act('next', { expectStep: fromStep });
+  if (lastError) await act('state', { force: true }); // noe gikk galt: hent riktig tilstand
   busy = false;
   draw();
 }

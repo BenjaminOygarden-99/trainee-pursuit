@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.2: Musikk og flyt «på skinner»
+
+- **Nedtellingsmusikken (Jeopardy) spilte ikke.** Kontrollpanelet sendte en manglende varighet til musikkregissøren, så startpunktet i låta ble ugyldig og nettleseren nektet å spille. Nå brukes spillets varighet. Låta starter presist og stopper etter nøyaktig 20 sekunder, etterfulgt av summeren. Ugyldige verdier blir også fanget opp i `audio.js`.
+- **Introvolumet hoppet opp ved lagpresentasjonene.** Hvert lag ga et tidsstyrt volumstøt, og gamle tidsur fra introen og forrige lag kunne slå inn midt i neste scene. Nå ligger musikken stødig på teppe-nivå (0,3) under alle tre lagene, og hvert lag får en kort syntetisk fanfare i stedet. Alle tidsstyrte volumendringer annulleres når en ny scene starter.
+- **Forsinkelse på NESTE (opptil ca. 2 s).** Storskjermen hentet status hvert sekund gjennom en CDN-cache som kunne være 1 s gammel. Nå:
+  - bruker storskjermen et eget ukachet endepunkt (`GET /api/live`) og sjekker hvert 0,25 s. Målt lokalt tar det 180–290 ms fra trykk til skjermskifte. På Netlify kommer serverens responstid i tillegg.
+  - skifter kontrollpanelet visning og starter lyden i samme øyeblikk som du trykker. Serveren bekrefter i bakgrunnen.
+  - kan ikke en rutinemessig statusoppdatering som var på vei, lenger overskrive steget du nettopp trykket deg til (det kunne gi feil musikk).
+  - kjører serveren oppslagene i svaret samtidig, og leser ikke tilstanden på nytt etter en endring.
+- Vinnermusikken starter alltid fra begynnelsen. Finalemusikken starter på nytt når finalen introduseres.
+- Feilsøking: hva som faktisk spilles, logges i `window.__tpAudio` i kontrollpanelet (åpne konsollen ved behov).
+
+
 ## 0.4.1: Feilrettinger
 
 - **Mobil:** Personverntekst og plassholder i kallenavnfeltet er fjernet. Teksten havnet bak Netlify-merket og var uleselig.
