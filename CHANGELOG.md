@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.1: Feilrettinger
+
+- **Mobil:** Personverntekst og plassholder i kallenavnfeltet er fjernet. Teksten havnet bak Netlify-merket og var uleselig.
+- **Kontrollpanel:** Manuslisten («Hopp til steg») beholder nå rulleposisjonen når panelet oppdateres hvert andre sekund. Før hoppet den til toppen.
+- **Lyd:** Lydoppsett og avspilling er flyttet fra storskjermen til kontrollpanelet («Lyd og musikk»). Storskjermen viser aldri lydoppsett. Lyden spilles fra enheten som kjører kontrollpanelet. NESTE-trykket aktiverer lyden, og summer og pling spilles også derfra.
+- **Innlogging:** PIN-feltet kunne bli tømt mens man skrev, hvis lydfilene ble lastet inn samtidig. Det ga «Feil PIN». Innloggingen tegnes ikke lenger på nytt mens man skriver.
+- **Klokke:** Ny klokkesynk mot et ukachet endepunkt (`GET /api/time`, flere målinger, kortest rundtur vinner), i stedet for tiden i den CDN-cachede tilstanden. Den kunne være opptil 1 s gammel og fikk klokka til å hoppe og gå opp. Nedtellingen kan aldri gå oppover for samme frist. Storskjermen oppdaterer klokka per skjermbilde (requestAnimationFrame), og mobilen og panelet hver 100–200 ms. Testet: 20 sekundskift med 956–1030 ms mellomrom og ingen hopp oppover, også med simulert 0–1 s gammel servertid.
+
+
 ## 0.4.0: Showkjøring med én knapp + musikk
 
 ### Ny funksjon

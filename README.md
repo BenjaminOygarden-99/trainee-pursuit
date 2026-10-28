@@ -16,7 +16,7 @@
 
 Kontrollpanelet (`/kontroll`) følger manuset steg for steg. **Det eneste du gjør er å trykke NESTE, og å trykke på laget som fikk poeng.** Alt annet skjer automatisk: kategorier, spørsmål, klokke, «Snu tavlene!», fasit med statistikk, kakestykker, stillingen, finalen, vinnerkåring og musikk.
 
-1. **Før gjestene kommer:** Åpne `/skjerm` på PC-en som er koblet til projektor og lyd. Klikk «Klikk for å aktivere lyd», og dra inn de tre musikkfilene (se under). Åpne `/kontroll` på en annen skjerm, mobil eller nettbrett, og logg inn med PIN.
+1. **Før gjestene kommer:** Åpne `/skjerm` i fullskjerm på projektoren. Åpne `/kontroll` på **teknisk-PC-en som er koblet til lydanlegget**, logg inn med PIN, og last inn de tre musikkfilene under «Lyd og musikk» (se under). Lyden spilles fra kontrollpanelet, ikke fra storskjermen.
 2. **Under showet:** Trykk **NESTE**. Panelet viser hva som skjer på storskjermen og hva Agne skal si (replikkene er hentet fra manuset). En presentasjonsklikker fungerer også (pil høyre eller Page Down).
 3. **Etter hver fasit:** Trykk på laget eller lagene som hadde riktig svar på tavla. Laget får kakestykket, storskjermen viser et banner, og det spilles en pling. I finalen trykker du på laget som var nærmest. Lag som allerede har stykket, er sperret.
 4. **Får et lag full kake,** hopper neste trykk rett til vinnerkåringen. Er spørsmålene brukt opp, vinner laget med flest stykker. Ved uavgjort ber panelet deg velge vinner under «Avansert».
@@ -35,7 +35,7 @@ Kontrollpanelet (`/kontroll`) følger manuset steg for steg. **Det eneste du gj�
 
 Pling (kakestykke), summer (tiden er ute), «ta-da» (fasit) og «whoosh» (kategori) lages av nettleseren selv. Det trengs ingen filer til dem.
 
-**Musikkfilene legges inn på storskjerm-PC-en, ikke i GitHub.** De lagres i nettleseren på den PC-en (IndexedDB) og blir der til nettleserdata slettes. Låtene er opphavsrettsbeskyttet, og et Netlify-nettsted er offentlig, så ikke legg dem i repoet. `.gitignore` stopper `public/audio/*.mp3`. Trykk **L** på storskjermen for å åpne lydpanelet igjen, og **M** for å stoppe musikken.
+**Musikkfilene legges inn i kontrollpanelet på teknisk-PC-en, ikke i GitHub.** De lagres i nettleseren på den PC-en (IndexedDB) og blir der til nettleserdata slettes. Storskjermen viser aldri lydoppsett, så publikum ser det ikke. Låtene er opphavsrettsbeskyttet, og et Netlify-nettsted er offentlig, så ikke legg dem i repoet. `.gitignore` stopper `*.mp3`. Første klikk i panelet aktiverer lyden (nettleserne krever et brukertrykk).
 
 ## Publisere på Netlify
 
