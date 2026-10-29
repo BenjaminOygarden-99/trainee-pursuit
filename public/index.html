@@ -278,7 +278,7 @@ async function draw() {
            h('div', { class: 'center', style: { flex: 'none', paddingTop: '10px' } }, h('div', { class: 'status-icon wait' }), h('p', {}, 'Lytt til Agne. Svarknappene kommer når klokka starter!'))];
       break;
     case 'category':
-      nodes = waitView('Gjør deg klar', `${q.round}, spørsmål ${q.n}. Spørsmålet kommer straks.`, cat, { icon: 'wait' }); break;
+      nodes = waitView('Gjør deg klar', `${q.round}, spørsmål ${q.inRound ?? q.n}. Spørsmålet kommer straks.`, cat, { icon: 'wait' }); break;
     case 'question':
       if (st.audienceOpen === false) nodes = waitView('Nå svarer bare lagene', 'Følg med på storskjermen.', cat, { icon: 'wait' });
       else if (answered[akey()]) nodes = waitView('Svaret er registrert', 'Følg med på storskjermen.', cat, { icon: 'ok', chip: answered[akey()] });

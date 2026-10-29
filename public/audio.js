@@ -231,8 +231,11 @@ export function cue(dir, phase, prev, ctx = {}) {
     case 'lobby':
       if (dir.playing) dir.level(BED, 1.5);
       break;
-    case 'ask':
+    case 'category': // kategorien vises og står til NESTE: «whoosh», musikken dempes under Agne
       dir.whoosh();
+      if (dir.playing?.slot === 'tension') dir.level(0.18, 1.5); else dir.stop(1.2);
+      break;
+    case 'ask':
       if (dir.playing?.slot === 'tension') dir.level(0.18, 1.5); else dir.stop(1.2);
       break;
     case 'question': {

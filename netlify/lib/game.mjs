@@ -264,6 +264,9 @@ async function applyStep(store, s, index) {
       s.phase = 'teams';
       s.teamsShown = step.n;
       break;
+    case 'category':
+      Object.assign(s, { phase: 'category', qIndex: step.qIndex, openedAt: null, deadline: null, reveal: null });
+      break;
     case 'ask':
       Object.assign(s, { phase: 'ask', qIndex: step.qIndex, openedAt: null, deadline: null, reveal: null });
       break;
