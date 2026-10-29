@@ -342,6 +342,30 @@
   #confetti { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity 800ms ease; }
   #confetti.on { opacity: 1; }
 
+
+  /* ======================================================================
+     PREMIEN: egen scene
+     ====================================================================== */
+  .v-prize { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; padding-top: 90px; }
+  .prize-rays { position: absolute; left: 50%; top: 56%; width: 1700px; height: 1700px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(244, 185, 66, .16) 0deg 7deg, transparent 7deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%); mask-image: radial-gradient(circle, #000 18%, transparent 62%);
+    animation: rays 60s linear infinite, fade-in 1.2s ease both; }
+  @keyframes rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes fade-in { from { opacity: 0; } }
+  .prize-top { position: relative; font-size: 70px; transform: skewX(-6deg); animation: rise 700ms var(--bounce) both; }
+  .prize-pre { position: relative; font-size: 36px; animation: rise 700ms var(--bounce) 350ms both; }
+  .prize-sign { position: relative; margin-top: 18px; padding: 54px 96px 62px; animation: sign-drop 1000ms var(--bounce) 500ms both; }
+  .prize-amount { display: flex; align-items: center; gap: 30px; }
+  .prize-amount .flap { font-size: 190px; gap: 10px; }
+  .prize-amount .flap .ch { animation: flip-digit 520ms cubic-bezier(.3,1.4,.5,1) both; animation-delay: var(--d, 1s); transform-origin: 50% 50%; }
+  .prize-amount .flap .ch.sym { min-width: .28em; }
+  .prize-amount .kr { font-size: 150px; animation: rise 600ms var(--bounce) 2.3s both; }
+  @keyframes flip-digit { 0% { transform: rotateX(90deg); opacity: 0; } 60% { transform: rotateX(-18deg); opacity: 1; } 100% { transform: rotateX(0); } }
+  .prize-foot { position: relative; font-size: 30px; color: var(--cream); letter-spacing: .08em; animation: rise 700ms ease 2.7s both; }
+  #stage[data-phase="prize"] { --beam: #ffe2a8; }
+  @media (prefers-reduced-motion: reduce) { .prize-rays { animation: none; } }
+
   .offline { position: absolute; z-index: 10; right: 60px; bottom: 44px; padding: 10px 18px; border-radius: 10px; background: var(--ink); border: 3px solid var(--danger); font-weight: 800; font-size: 22px; color: var(--danger); }
 </style>
 </head>
@@ -612,7 +636,6 @@ function teams(st) {
   const total = st.game.categories.length;
   return h('section', { class: 'view v-teams' },
     h('h2', { class: 'lettering', style: { margin: 0 } }, 'Kveldens lag'),
-    prize(st),
     h('div', { class: 'podiums' }, st.game.teams.map((t, i) => {
       const shown = i < st.teamsShown;
       const stand = h('div', { class: 'stand panel' },
@@ -629,7 +652,6 @@ function rules(st) {
   const rule = (n, title, text) => h('div', { class: 'rule panel', style: { '--i': n } }, h('span', { class: 'medal' }, n), h('h3', {}, title), h('p', {}, text));
   return h('section', { class: 'view v-rules' },
     h('h2', { class: 'lettering', style: { margin: 0 } }, 'Slik spiller vi'),
-    prize(st),
     h('div', { class: 'rules' },
       rule(1, 'Velg din spiller', 'Laget velger hvem som svarer. Alle svarer på to kategorier.'),
       rule(2, '20 sekunder', 'Skriv svaret på tavla før klokka slukker.'),
@@ -655,7 +677,25 @@ function outro(st) {
     h('div', { class: 'plate' }, 'Takk for i kveld!'));
 }
 
-const views = { intro, categories, teams, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
+
+// Premien: egen scene. «Spiller om muligheten til å vinne» + et stort lyspæreskilt der beløpet
+// rulles inn siffer for siffer som på en gammel resultattavle.
+function prizeView(st) {
+  const amount = st.game.prize ?? '1 000 000';
+  const digits = flap(amount, 'gold');
+  digits.querySelectorAll('.ch').forEach((c, i) => c.style.setProperty('--d', `${1100 + i * 140}ms`));
+  const sign = h('div', { class: 'sign prize-sign', style: { '--s': 1 } },
+    h('div', { class: 'prize-amount' }, digits, h('span', { class: 'kr lettering' }, 'kr')));
+  bulbFrame(sign, { spacing: 44, r: 7.5, inset: 15, outset: 30, radius: 80, chase: true, chaseDelay: 300 });
+  return h('section', { class: 'view v-prize' },
+    h('div', { class: 'prize-rays', 'aria-hidden': 'true' }),
+    h('div', { class: 'prize-top lettering flat' }, 'Kveldens premie'),
+    h('div', { class: 'plate prize-pre' }, 'Lagene spiller om muligheten til å vinne'),
+    sign,
+    h('div', { class: 'prize-foot label-caps' }, 'Første lag til full kake'));
+}
+
+const views = { intro, categories, teams, prize: prizeView, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
 
 // Lyd og musikk styres fra kontrollpanelet. Storskjermen viser aldri lydoppsett.
 
