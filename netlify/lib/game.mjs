@@ -25,7 +25,7 @@ const answerLabel = (q) => q.answerLabel ?? (q.type === 'mc' ? q.options[q.answe
 
 function initialState() {
   return {
-    phase: 'lobby', // intro | categories | teams | rules | lobby | ask | category | question | reveal | board | finale | winner | leaderboard | outro
+    phase: 'curtain', // curtain (teppet lukket, før showet) | intro | categories | teams | rules | lobby | ask | category | question | reveal | board | finale | winner | leaderboard | outro
     step: -1, // posisjon i showmanuset (show.mjs)
     teamsShown: 0,
     awards: {}, // qid -> lag som fikk kakestykke på akkurat dette spørsmålet
@@ -255,6 +255,10 @@ function leaders(cakes) {
 }
 
 async function applyStep(store, s, index) {
+  if (index === -1) { // tilbake til start: teppet lukket, ingenting kjører
+    Object.assign(s, { step: -1, phase: 'curtain', tie: false, teamsShown: 0 });
+    return true;
+  }
   const step = plan[index];
   if (!step) return false;
   s.step = index;
@@ -331,7 +335,7 @@ async function admin(store, req, body) {
       break;
     }
     case 'prev':
-      if ((s.step ?? -1) <= 0) break;
+      if ((s.step ?? -1) < 0) break; // fra introen går «tilbake» til lukket teppe
       await applyStep(store, s, s.step - 1);
       await saveState(store, s);
       break;

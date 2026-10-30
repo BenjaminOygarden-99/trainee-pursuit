@@ -211,21 +211,22 @@ export function cue(dir, phase, prev, ctx = {}) {
   dir.cancelLater();
   dir.log('cue', { phase, prev });
   switch (phase) {
+    case 'curtain': // tilbake til start: teppet lukkes, musikken tones ut
+      dir.stop(1.2);
+      break;
     case 'intro':
       dir.play('theme', { level: 1, fadeIn: 0.3, restart: true });
       dir.later(() => { if (dir.playing?.slot === 'theme') dir.level(BED, 3); }, 14000); // «skrus litt ned» når Agne snakker
       break;
     case 'categories':
-      if (dir.playing?.slot === 'theme') dir.level(BED, 1.5); else dir.play('theme', { level: BED, fadeIn: 1.5, from: 20 });
+      // Samme volum som introen: musikken fortsetter uendret.
+      if (dir.playing?.slot !== 'theme') dir.play('theme', { level: 1, fadeIn: 1.5, from: 20 });
       break;
-    case 'teams': // [Musikk] [Applaus]: en kort fanfare per lag, musikken ligger stødig under
+    case 'teams': // musikken ligger stødig under, uten egne effektlyder
       if (dir.playing?.slot === 'theme') dir.level(BED, 0.8); else dir.play('theme', { level: BED, fadeIn: 1, from: 20 });
-      dir.fanfare();
       break;
-    case 'prize': // premien avsløres: fanfare + «ta-da», temaet ligger som teppe under
+    case 'prize': // premien: temaet ligger som teppe under, uten egne effektlyder
       if (dir.playing?.slot === 'theme') dir.level(BED, 0.8); else dir.play('theme', { level: BED, fadeIn: 1, from: 20 });
-      dir.fanfare();
-      dir.later(() => dir.reveal(), 1300);
       break;
     case 'rules':
       dir.play('tension', { level: 0.5, fadeIn: 1.2 });

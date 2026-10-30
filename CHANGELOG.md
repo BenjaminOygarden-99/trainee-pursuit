@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.3: Tilbake til lukket teppe og jevnere lyd i starten
+
+- **Du kan gå tilbake til lukket teppe.** Fra introen heter knappen «Tilbake: lukk teppet». Den lukker teppet og toner ut musikken. Øverst i «Hopp til steg i manuset» står også «0 · Før start: teppet lukket».
+- **«De seks kategoriene» har samme volum som introen.** Musikken dempes ikke lenger når kategoriene vises.
+- **Effektlydene ved lagpresentasjonen og premien er fjernet.** Det spilles ikke lenger fanfare per lag eller fanfare og «ta-da» ved 1 000 000 kr. Musikken ligger stødig under som før.
+- Resten av showet er uendret.
+
+## 0.5.2: Teppet er lukket før showet, og kallenavn låses
+
+- **Storskjermen starter med lukket teppe.** Første trykk på NESTE («Intro: teppet går opp») drar teppet opp og starter intromusikken samtidig. Da kan skjermen stå oppe før gjestene kommer uten at introen går. Kontrollpanelet viser «Teppet er lukket» før start.
+- **«Bytt kallenavn» er fjernet fra mobilen.** Publikum velger kallenavn én gang.
+- Resten av showet er uendret.
+
 ## 0.5.1: Premien som egen scene og ryddigere kontrollpanel
 
 - **Ny scene «Kveldens premie»** mellom lagpresentasjonen og «Slik spiller vi». Platen «Lagene spiller om muligheten til å vinne» står over et stort lyspæreskilt der 1 000 000 rulles inn siffer for siffer på en resultattavle, etterfulgt av «KR». Bak roterer langsomme gullstråler, og lyden er fanfare og «ta-da» mens musikken ligger stødig under. Agnes replikk for steget ligger i manuset. Manuset har 61 steg.

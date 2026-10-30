@@ -73,6 +73,7 @@
   }
   .curtains i:first-child { left: 0; animation: open-l 1700ms cubic-bezier(.65,0,.25,1) .5s both; }
   .curtains i:last-child { right: 0; animation: open-r 1700ms cubic-bezier(.65,0,.25,1) .5s both; }
+  .curtains.closed i { animation: none; } /* før showet: teppet er lukket til første NESTE */
   .curtains i::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: linear-gradient(180deg, #ffd77a, var(--gold-deep)); opacity: .9; }
   @keyframes open-l { to { transform: translateX(-100%); } }
   @keyframes open-r { to { transform: translateX(100%); } }
@@ -421,6 +422,11 @@ function crowd(st) {
       h('div', { class: 'counter' }, flap(String(st.players[g.id]).padStart(2, '0')), h('span', { class: 'plate' }, g.name)))));
 }
 
+// Før showet: lukket sceneteppe. Første NESTE («Intro») åpner det, sammen med musikken.
+function curtain(st) {
+  return h('section', { class: 'view v-intro' }, h('div', { class: 'curtains closed' }, h('i'), h('i')));
+}
+
 function intro(st) {
   return h('section', { class: 'view v-intro' },
     pursuitSign({ scale: 1.08, chase: true, chaseDelay: 2600 }),
@@ -695,7 +701,7 @@ function prizeView(st) {
     h('div', { class: 'prize-foot label-caps' }, 'Første lag til full kake'));
 }
 
-const views = { intro, categories, teams, prize: prizeView, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
+const views = { curtain, intro, categories, teams, prize: prizeView, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
 
 // Lyd og musikk styres fra kontrollpanelet. Storskjermen viser aldri lydoppsett.
 

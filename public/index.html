@@ -291,14 +291,7 @@ async function draw() {
     case 'winner': nodes = waitView('Takk for at du spilte!', myResult?.rank ? `Du endte som nr. ${myResult.rank} av ${myResult.of}.` : 'Vi ses på neste Høstbord.'); break;
     default: nodes = waitView(`Du er med, ${me.nick}!`, 'Første spørsmål kommer på storskjermen snart. Hold mobilen klar.', null, { icon: 'ok' });
   }
-  app.replaceChildren(...nodes,
-    h('button', { class: 'link', onclick: () => { if (!confirmLeave()) return; me = null; local.del('tp-me'); shownKey = ''; draw(); } }, 'Bytt kallenavn'));
-}
-function confirmLeave() {
-  const b = app.querySelector('.link');
-  if (b.dataset.sure) return true;
-  b.dataset.sure = '1'; b.textContent = 'Trykk igjen for å starte på nytt (poengene dine forsvinner)';
-  return false;
+  app.replaceChildren(...nodes);
 }
 
 setInterval(() => { if (st?.phase === 'question') draw(); }, 200);
