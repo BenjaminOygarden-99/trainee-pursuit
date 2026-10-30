@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.1: Premien som egen scene og ryddigere kontrollpanel
+
+- **Ny scene «Kveldens premie»** mellom lagpresentasjonen og «Slik spiller vi». Platen «Lagene spiller om muligheten til å vinne» står over et stort lyspæreskilt der 1 000 000 rulles inn siffer for siffer på en resultattavle, etterfulgt av «KR». Bak roterer langsomme gullstråler, og lyden er fanfare og «ta-da» mens musikken ligger stødig under. Agnes replikk for steget ligger i manuset. Manuset har 61 steg.
+- Premieskiltet er fjernet fra «Kveldens lag» og «Slik spiller vi». Det står fortsatt på «Finalen» og på vinnerskjermen.
+- **Kontrollpanelet:** «Hvem svarte riktig?» står nå øverst til høyre, ved siden av NESTE. Under kommer «Det som kommer», og nederst «Lyd og musikk». Lydboksen lukker seg selv når den står som «Klar», og åpnes bare om du klikker på den.
+- Konfetti på vinnerskjermen og «Skarpest i salen» er uendret.
+
+
+## 0.5.0: Manuell kategori, millionpremie og konfetti
+
+- **Kategorien står til NESTE trykkes.** Hvert spørsmål (runde 1 og finalen) har nå et eget kategoristeg før spørsmålet vises, slik at lagene rekker å velge hvem som svarer. Rekkefølgen per spørsmål er: kategori → spørsmålet vises → klokka går → fasit og poeng. Kategorien fløt tidligere automatisk over i spørsmålet etter 3,4 sekunder. Storskjermen viser «Lagene velger hvem som svarer» (i finalen: «Lagene diskuterer sammen»). Manuset har 60 steg.
+- **Millionpremien:** premieskiltet «Spiller om muligheten til å vinne 1 000 000 kr» med tavlesifre vises på «Kveldens lag», «Slik spiller vi» og «Finalen». På vinnerskjermen står det «Har vunnet muligheten til å vinne 1 000 000 kr». Agnes replikk under reglene nevner premien. Beløpet kan endres i `questions.mjs` (`prize`).
+- **Konfetti** regner i bakgrunnen ved vinnerkåringen og ved «Skarpest i salen», og tones ut i avslutningen. Den er avslått hvis maskinen er satt til redusert bevegelse.
+- Vinnerskjermen viser vinnerens faktiske kake. Før viste den alltid full kake, også når laget vant på flest stykker.
+- Lyd: «whoosh» kommer nå når kategorien vises, ikke når spørsmålet vises.
+- **Uendret:** vinnerregelen (full kake vinner, ellers flest stykker etter siste spørsmål, og uavgjort varsles), poeng, musikk, klokke, mobil og kontrollpanel.
+
+
 ## 0.4.2: Musikk og flyt «på skinner»
 
 - **Nedtellingsmusikken (Jeopardy) spilte ikke.** Kontrollpanelet sendte en manglende varighet til musikkregissøren, så startpunktet i låta ble ugyldig og nettleseren nektet å spille. Nå brukes spillets varighet. Låta starter presist og stopper etter nøyaktig 20 sekunder, etterfulgt av summeren. Ugyldige verdier blir også fanget opp i `audio.js`.

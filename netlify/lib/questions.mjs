@@ -26,6 +26,7 @@ export const game = {
     { id: 'bedrift', name: 'Medlemsbedrift' },
   ],
   duration: 20, // sekunder per spørsmål
+  prize: '1 000 000', // lagene spiller om MULIGHETEN til å vinne dette beløpet (kr)
   audienceInFinale: true, // false = bare lagene svarer i finalen (mobilene viser «Nå svarer bare lagene»)
 };
 

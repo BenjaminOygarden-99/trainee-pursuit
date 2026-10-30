@@ -186,7 +186,7 @@ let data = null;
 let stopPoll = null;
 let lastError = '';
 
-const phaseNames = { intro: 'Intro', categories: 'Kategoriene', teams: 'Lagene', rules: 'Reglene', ask: 'Spørsmålet vises', finale: 'Finalen', outro: 'Avslutning', lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
+const phaseNames = { intro: 'Intro', categories: 'Kategoriene', teams: 'Lagene', prize: 'Premien', rules: 'Reglene', ask: 'Spørsmålet vises', finale: 'Finalen', outro: 'Avslutning', lobby: 'Velkomst', category: 'Kategori vises', question: 'Spørsmål pågår', reveal: 'Fasit vises', board: 'Kakestilling', leaderboard: 'Toppliste salen', winner: 'Vinner kåret' };
 
 let mutations = 0; // øker ved hvert trykk; svar på eldre statusforespørsler forkastes
 async function act(action, extra = {}) {
@@ -340,8 +340,10 @@ function audioBox() {
       h('label', { class: 'btn small' }, ok ? 'Bytt' : 'Velg fil', input),
       h('button', { class: 'btn small', disabled: !ok || !audio.enabled, onclick: () => audio.play(k, { level: 1, stopAfter: 6 }) }, 'Test'));
   };
-  return h('details', { class: 'box audio-box' + (ready && audioOn ? ' ready' : ''), open, ontoggle: (e) => { audioOpen = e.currentTarget.open; } },
-    h('summary', {}, h('span', {}, 'Lyd og musikk'), h('span', { class: 'astatus' }, status)),
+  // Lukkes automatisk når alt er klart. Bare brukerens egne klikk på overskriften overstyrer dette
+  // (nettleserens «toggle»-hendelse ved første tegning skal ikke telle som et valg).
+  return h('details', { class: 'box audio-box' + (ready && audioOn ? ' ready' : ''), open },
+    h('summary', { onclick: () => { audioOpen = !open; } }, h('span', {}, 'Lyd og musikk'), h('span', { class: 'astatus' }, status)),
     h('p', { class: 'muted', style: { margin: '8px 0 12px' } }, 'Lyden spilles fra denne enheten. Kjør kontrollpanelet på teknisk-PC-en som er koblet til lydanlegget. Filene lagres bare i denne nettleseren.'),
     Object.keys(SLOTS).map(slot),
     h('div', { class: 'row', style: { marginTop: '12px' } },
@@ -452,8 +454,8 @@ function draw() {
       h('a', { href: '/skjerm', target: '_blank', class: 'btn' }, 'Åpne storskjermen')),
     lastError ? h('div', { class: 'err', role: 'alert', style: { padding: '12px 24px' } }, lastError) : '',
     h('div', { class: 'layout' },
-      h('div', {}, showBox(), scoreBox()),
-      h('div', {}, audioBox(), upcomingBox())),
+      h('div', {}, showBox()),
+      h('div', {}, scoreBox(), upcomingBox(), audioBox())),
     h('div', { class: 'adv-wrap' }, adv));
   app.querySelectorAll('[data-scroll-key]').forEach((el) => { if (keep[el.dataset.scrollKey] != null) el.scrollTop = keep[el.dataset.scrollKey]; });
 }

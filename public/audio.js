@@ -222,6 +222,11 @@ export function cue(dir, phase, prev, ctx = {}) {
       if (dir.playing?.slot === 'theme') dir.level(BED, 0.8); else dir.play('theme', { level: BED, fadeIn: 1, from: 20 });
       dir.fanfare();
       break;
+    case 'prize': // premien avsløres: fanfare + «ta-da», temaet ligger som teppe under
+      if (dir.playing?.slot === 'theme') dir.level(BED, 0.8); else dir.play('theme', { level: BED, fadeIn: 1, from: 20 });
+      dir.fanfare();
+      dir.later(() => dir.reveal(), 1300);
+      break;
     case 'rules':
       dir.play('tension', { level: 0.5, fadeIn: 1.2 });
       break;
@@ -231,8 +236,11 @@ export function cue(dir, phase, prev, ctx = {}) {
     case 'lobby':
       if (dir.playing) dir.level(BED, 1.5);
       break;
-    case 'ask':
+    case 'category': // kategorien vises og står til NESTE: «whoosh», musikken dempes under Agne
       dir.whoosh();
+      if (dir.playing?.slot === 'tension') dir.level(0.18, 1.5); else dir.stop(1.2);
+      break;
+    case 'ask':
       if (dir.playing?.slot === 'tension') dir.level(0.18, 1.5); else dir.stop(1.2);
       break;
     case 'question': {

@@ -265,7 +265,7 @@ async function draw() {
   let nodes;
   const cat = q && catOf(st.game, q.cat);
   switch (st.phase) {
-    case 'intro': case 'categories': case 'teams': case 'rules':
+    case 'intro': case 'categories': case 'teams': case 'prize': case 'rules':
       nodes = waitView('Showet er i gang!', 'Se opp på scenen. Spørsmålene kommer her på mobilen.', null, { icon: 'wait' }); break;
     case 'finale':
       nodes = waitView('Finalen!', st.game.audienceInFinale === false ? 'Nå svarer bare lagene på scenen. Heia på favoritten!' : 'Nærmest svaret vinner. Du gjetter et tall på mobilen.', null, { icon: 'wait' }); break;
@@ -278,7 +278,7 @@ async function draw() {
            h('div', { class: 'center', style: { flex: 'none', paddingTop: '10px' } }, h('div', { class: 'status-icon wait' }), h('p', {}, 'Lytt til Agne. Svarknappene kommer når klokka starter!'))];
       break;
     case 'category':
-      nodes = waitView('Gjør deg klar', `${q.round}, spørsmål ${q.n}. Spørsmålet kommer straks.`, cat, { icon: 'wait' }); break;
+      nodes = waitView('Gjør deg klar', `${q.round}, spørsmål ${q.inRound ?? q.n}. Spørsmålet kommer straks.`, cat, { icon: 'wait' }); break;
     case 'question':
       if (st.audienceOpen === false) nodes = waitView('Nå svarer bare lagene', 'Følg med på storskjermen.', cat, { icon: 'wait' });
       else if (answered[akey()]) nodes = waitView('Svaret er registrert', 'Følg med på storskjermen.', cat, { icon: 'ok', chip: answered[akey()] });
