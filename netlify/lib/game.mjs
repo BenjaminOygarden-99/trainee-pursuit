@@ -25,7 +25,7 @@ const answerLabel = (q) => q.answerLabel ?? (q.type === 'mc' ? q.options[q.answe
 
 function initialState() {
   return {
-    phase: 'lobby', // intro | categories | teams | rules | lobby | ask | category | question | reveal | board | finale | winner | leaderboard | outro
+    phase: 'curtain', // curtain (teppet lukket, før showet) | intro | categories | teams | rules | lobby | ask | category | question | reveal | board | finale | winner | leaderboard | outro
     step: -1, // posisjon i showmanuset (show.mjs)
     teamsShown: 0,
     awards: {}, // qid -> lag som fikk kakestykke på akkurat dette spørsmålet
@@ -263,6 +263,9 @@ async function applyStep(store, s, index) {
     case 'teams':
       s.phase = 'teams';
       s.teamsShown = step.n;
+      break;
+    case 'category':
+      Object.assign(s, { phase: 'category', qIndex: step.qIndex, openedAt: null, deadline: null, reveal: null });
       break;
     case 'ask':
       Object.assign(s, { phase: 'ask', qIndex: step.qIndex, openedAt: null, deadline: null, reveal: null });

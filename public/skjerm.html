@@ -73,6 +73,7 @@
   }
   .curtains i:first-child { left: 0; animation: open-l 1700ms cubic-bezier(.65,0,.25,1) .5s both; }
   .curtains i:last-child { right: 0; animation: open-r 1700ms cubic-bezier(.65,0,.25,1) .5s both; }
+  .curtains.closed i { animation: none; } /* før showet: teppet er lukket til første NESTE */
   .curtains i::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26px; background: linear-gradient(180deg, #ffd77a, var(--gold-deep)); opacity: .9; }
   @keyframes open-l { to { transform: translateX(-100%); } }
   @keyframes open-r { to { transform: translateX(100%); } }
@@ -319,6 +320,53 @@
 
   .tie { margin-top: 18px; font-size: 32px; }
 
+
+  /* Premieskilt: «Spiller om muligheten til å vinne 1 000 000 kr» */
+  .prize { display: inline-flex; align-items: center; gap: 24px; padding: 14px 30px 14px 26px; border-radius: 14px; background: var(--ink); border: 4px solid var(--gold); box-shadow: 0 0 0 3px var(--ink), 0 8px 0 3px #6e4c0b, 0 0 40px rgba(244, 185, 66, .35); animation: rise 700ms var(--bounce) .4s both; }
+  .prize .pre { font-size: 27px; color: var(--cream); max-width: 430px; line-height: 1.15; }
+  .prize .amount { display: inline-flex; align-items: center; gap: 14px; }
+  .prize .flap { font-size: 58px; }
+  .prize .kr { font-size: 50px; }
+  .prize.won { border-color: var(--warm); box-shadow: 0 0 0 3px var(--ink), 0 8px 0 3px #6e4c0b, 0 0 60px rgba(244, 185, 66, .6); animation-delay: 1.2s; }
+  .v-teams .prize { margin-top: 18px; }
+  .v-teams .podiums { margin-top: 10px; }
+  .v-teams .podium .cake { width: 280px; height: 280px; }
+  .v-rules { gap: 26px; }
+  .v-rules .rules { margin-top: 6px; }
+  .v-finale { gap: 34px; }
+  .v-finale .sign { padding: 44px 110px 52px; }
+  .v-finale .sign .lettering { font-size: 150px; }
+  .v-winner { gap: 30px; }
+  .v-category .plate.pick { font-size: 30px; animation: rise 700ms var(--bounce) .9s both; }
+
+  /* Konfetti bak innholdet (vinner og beste i salen) */
+  #confetti { position: absolute; inset: 0; z-index: 5; pointer-events: none; opacity: 0; transition: opacity 800ms ease; }
+  #confetti.on { opacity: 1; }
+
+
+  /* ======================================================================
+     PREMIEN: egen scene
+     ====================================================================== */
+  .v-prize { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 30px; padding-top: 90px; }
+  .prize-rays { position: absolute; left: 50%; top: 56%; width: 1700px; height: 1700px; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+    background: repeating-conic-gradient(from 0deg, rgba(244, 185, 66, .16) 0deg 7deg, transparent 7deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%); mask-image: radial-gradient(circle, #000 18%, transparent 62%);
+    animation: rays 60s linear infinite, fade-in 1.2s ease both; }
+  @keyframes rays { to { transform: translate(-50%, -50%) rotate(360deg); } }
+  @keyframes fade-in { from { opacity: 0; } }
+  .prize-top { position: relative; font-size: 70px; transform: skewX(-6deg); animation: rise 700ms var(--bounce) both; }
+  .prize-pre { position: relative; font-size: 36px; animation: rise 700ms var(--bounce) 350ms both; }
+  .prize-sign { position: relative; margin-top: 18px; padding: 54px 96px 62px; animation: sign-drop 1000ms var(--bounce) 500ms both; }
+  .prize-amount { display: flex; align-items: center; gap: 30px; }
+  .prize-amount .flap { font-size: 190px; gap: 10px; }
+  .prize-amount .flap .ch { animation: flip-digit 520ms cubic-bezier(.3,1.4,.5,1) both; animation-delay: var(--d, 1s); transform-origin: 50% 50%; }
+  .prize-amount .flap .ch.sym { min-width: .28em; }
+  .prize-amount .kr { font-size: 150px; animation: rise 600ms var(--bounce) 2.3s both; }
+  @keyframes flip-digit { 0% { transform: rotateX(90deg); opacity: 0; } 60% { transform: rotateX(-18deg); opacity: 1; } 100% { transform: rotateX(0); } }
+  .prize-foot { position: relative; font-size: 30px; color: var(--cream); letter-spacing: .08em; animation: rise 700ms ease 2.7s both; }
+  #stage[data-phase="prize"] { --beam: #ffe2a8; }
+  @media (prefers-reduced-motion: reduce) { .prize-rays { animation: none; } }
+
   .offline { position: absolute; z-index: 10; right: 60px; bottom: 44px; padding: 10px 18px; border-radius: 10px; background: var(--ink); border: 3px solid var(--danger); font-weight: 800; font-size: 22px; color: var(--danger); }
 </style>
 </head>
@@ -333,6 +381,7 @@
     <div class="st-vignette"></div>
     <div class="st-frame" id="frame"></div>
   </div>
+  <canvas id="confetti" width="1920" height="1080" aria-hidden="true"></canvas>
   <div id="scene"></div>
 </div>
 <script type="module">
@@ -373,6 +422,11 @@ function crowd(st) {
       h('div', { class: 'counter' }, flap(String(st.players[g.id]).padStart(2, '0')), h('span', { class: 'plate' }, g.name)))));
 }
 
+// Før showet: lukket sceneteppe. Første NESTE («Intro») åpner det, sammen med musikken.
+function curtain(st) {
+  return h('section', { class: 'view v-intro' }, h('div', { class: 'curtains closed' }, h('i'), h('i')));
+}
+
 function intro(st) {
   return h('section', { class: 'view v-intro' },
     pursuitSign({ scale: 1.08, chase: true, chaseDelay: 2600 }),
@@ -397,9 +451,10 @@ function lobby(st) {
 function category(st) {
   const c = catOf(st.game, st.question.cat);
   return h('section', { class: 'view v-category', style: { '--cat': c.color } },
-    h('div', { class: 'meta label-caps' }, `${st.question.round}, spørsmål ${st.question.n} av ${st.totalQuestions}`),
+    h('div', { class: 'meta label-caps' }, `${st.question.round}, spørsmål ${st.question.inRound ?? st.question.n} av ${st.question.roundSize ?? st.totalQuestions}`),
     cakeSVG(st.game.categories, [c.id], c.name, { fresh: [c.id] }),
-    h('div', { class: 'cat-sign' }, c.name));
+    h('div', { class: 'cat-sign' }, c.name),
+    h('div', { class: 'plate pick' }, st.question.round === 'Finale' ? 'Lagene diskuterer sammen' : 'Lagene velger hvem som svarer'));
 }
 
 // Spilleklokke: én lyspære per sekund som slukker etter hvert.
@@ -463,14 +518,16 @@ function question(st) {
     salen);
 }
 
+// Spørsmålet vises (uten klokke). Kategorien har allerede stått på skjermen i eget steg.
 function ask(st) {
-  const c = catOf(st.game, st.question.cat);
-  const view = question(st);
-  view.append(h('div', { class: 'cat-intro', style: { '--cat': c.color } },
-    h('div', { class: 'label-caps' }, `${st.question.round}, spørsmål ${st.question.inRound} av ${st.question.roundSize}`),
-    cakeSVG(st.game.categories, [c.id], c.name, { fresh: [c.id] }),
-    h('div', { class: 'cat-sign' }, c.name)));
-  return view;
+  return question(st);
+}
+
+// «Spiller om muligheten til å vinne 1 000 000 kr»: premieskiltet med tavlesifre.
+function prize(st, won = false) {
+  return h('div', { class: 'prize' + (won ? ' won' : '') },
+    h('span', { class: 'pre label-caps' }, won ? 'Har vunnet muligheten til å vinne' : 'Spiller om muligheten til å vinne'),
+    h('span', { class: 'amount' }, flap(st.game.prize ?? '1 000 000', 'gold'), h('span', { class: 'kr lettering flat' }, 'kr')));
 }
 
 function lampRow(pct) {
@@ -561,9 +618,11 @@ function winner(st) {
   const all = st.game.categories.map((c) => c.id);
   const sign = h('div', { class: 'sign', style: { '--s': 1 } }, h('div', { class: 'lettering' }, teamName(st.game, st.winner)));
   bulbFrame(sign, { spacing: 44, r: 7.5, inset: 15, outset: 30, radius: 80, chase: true, chaseDelay: 500 });
+  const earned = st.cakes?.[st.winner] ?? all;
   return h('section', { class: 'view v-winner' },
     h('div', { class: 'plate' }, `Vinner av Trainee Pursuit ${st.game.event.replace(/\D+/g, '')}`),
-    h('div', { class: 'row' }, cakeSVG(st.game.categories, all, 'Full kake'), sign));
+    h('div', { class: 'row' }, cakeSVG(st.game.categories, earned, `${earned.length} av ${all.length} kakestykker`), sign),
+    prize(st, true));
 }
 
 function categories(st) {
@@ -613,6 +672,7 @@ function finale(st) {
   return h('section', { class: 'view v-finale' },
     sign,
     h('div', { class: 'plate' }, 'Nærmest svaret vinner kakestykket'),
+    prize(st),
     h('div', { class: 'mini-cakes' }, st.game.teams.map((t) => h('div', {},
       cakeSVG(st.game.categories, st.cakes[t.id], t.name), h('span', { class: 'label-caps' }, `${t.name} ${st.cakes[t.id].length}/${total}`)))));
 }
@@ -623,9 +683,66 @@ function outro(st) {
     h('div', { class: 'plate' }, 'Takk for i kveld!'));
 }
 
-const views = { intro, categories, teams, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
+
+// Premien: egen scene. «Spiller om muligheten til å vinne» + et stort lyspæreskilt der beløpet
+// rulles inn siffer for siffer som på en gammel resultattavle.
+function prizeView(st) {
+  const amount = st.game.prize ?? '1 000 000';
+  const digits = flap(amount, 'gold');
+  digits.querySelectorAll('.ch').forEach((c, i) => c.style.setProperty('--d', `${1100 + i * 140}ms`));
+  const sign = h('div', { class: 'sign prize-sign', style: { '--s': 1 } },
+    h('div', { class: 'prize-amount' }, digits, h('span', { class: 'kr lettering' }, 'kr')));
+  bulbFrame(sign, { spacing: 44, r: 7.5, inset: 15, outset: 30, radius: 80, chase: true, chaseDelay: 300 });
+  return h('section', { class: 'view v-prize' },
+    h('div', { class: 'prize-rays', 'aria-hidden': 'true' }),
+    h('div', { class: 'prize-top lettering flat' }, 'Kveldens premie'),
+    h('div', { class: 'plate prize-pre' }, 'Lagene spiller om muligheten til å vinne'),
+    sign,
+    h('div', { class: 'prize-foot label-caps' }, 'Første lag til full kake'));
+}
+
+const views = { curtain, intro, categories, teams, prize: prizeView, rules, lobby, ask, category, question, reveal, board, finale, leaderboard, winner, outro };
 
 // Lyd og musikk styres fra kontrollpanelet. Storskjermen viser aldri lydoppsett.
+
+
+// ---------- Konfetti ----------
+// Lett konfetti som regner i bakgrunnen (bak innholdet) ved vinnerkåring og «beste i salen».
+const confetti = (() => {
+  const cv = document.getElementById('confetti');
+  const ctx = cv.getContext('2d');
+  const colors = ['#f4b942', '#fff1d2', '#e96f3a', '#65bfc1', '#d978a1', '#9a83bd', '#83c994'];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let pieces = [], running = false, raf = 0, last = 0;
+  const spawn = (y) => ({ x: Math.random() * 1920, y, w: 10 + Math.random() * 10, h: 6 + Math.random() * 8, vy: 70 + Math.random() * 110, vx: -30 + Math.random() * 60, rot: Math.random() * Math.PI, vr: -3 + Math.random() * 6, sway: Math.random() * Math.PI * 2, c: colors[(Math.random() * colors.length) | 0] });
+  function frame(t) {
+    const dt = Math.min(0.05, (t - last) / 1000 || 0.016); last = t;
+    ctx.clearRect(0, 0, 1920, 1080);
+    for (const p of pieces) {
+      p.y += p.vy * dt; p.sway += dt * 2; p.x += (p.vx + Math.sin(p.sway) * 40) * dt; p.rot += p.vr * dt;
+      if (p.y > 1100 && running) Object.assign(p, spawn(-20));
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.abs(Math.cos(p.sway)) * 0.7 + 0.3);
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    pieces = pieces.filter((p) => p.y < 1120);
+    if (pieces.length) raf = requestAnimationFrame(frame); else raf = 0;
+  }
+  return {
+    start() {
+      if (running || reduce) return;
+      running = true;
+      cv.classList.add('on');
+      pieces = Array.from({ length: 170 }, () => spawn(-Math.random() * 1100)); // første regn kommer inn ovenfra
+      if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); }
+    },
+    stop() { // la bitene som er i luften falle ferdig, og ton ut
+      if (!running) return;
+      running = false;
+      cv.classList.remove('on');
+    },
+  };
+})();
+const CONFETTI_PHASES = ['winner', 'leaderboard'];
 
 // ---------- Tegning ----------
 let lastPhase = null;
@@ -649,6 +766,7 @@ function render(st) {
     renderedKey = key;
     stage.dataset.phase = st.phase;
     scene.replaceChildren((views[st.phase] ?? lobby)(st));
+    CONFETTI_PHASES.includes(st.phase) ? confetti.start() : confetti.stop();
     if (st.phase === 'intro') chaseFrame(3200);
     else if (st.phase === 'winner' || (st.phase === 'lobby' && prevPhase === 'intro')) chaseFrame(0);
     lastPhase = st.phase;

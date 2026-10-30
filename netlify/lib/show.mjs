@@ -16,6 +16,7 @@ export function buildPlan() {
   steps.push({ type: 'intro', title: 'Intro: teppet går opp', cue: 'GOD KVELD HØSTBORD 2026! [Vent på applausen] Dette er spillet dere har spilt på hytta, krangla om i juleferien og kanskje aldri helt fullført. Men i kveld skal det fullføres. Velkommen til TRAINEE PURSUIT!' });
   steps.push({ type: 'categories', title: 'De seks kategoriene', cue: 'I kveld skal tre lag kjempe om ære, berømmelse og det aller viktigste: SEIER. Akkurat som i Trivial Pursuit har vi seks kategorier: Sport og fritid, Geografi, Historie, Underholdning, Kunst og litteratur og Naturfag. Riktig svar gir et kakestykke, og laget som først får full kake, vinner. Sammen med meg har jeg min nydelige assistent [navn]!' });
   game.teams.forEach((t, i) => steps.push({ type: 'teams', n: i + 1, title: `Lagene: ${t.name} kommer opp`, cue: teamCues[i] ?? `Velkommen, ${t.name}!` }));
+  steps.push({ type: 'prize', title: 'Premien: muligheten til å vinne 1 000 000 kr', cue: 'Og hva spiller dere om i kveld? Jo, dere spiller om muligheten til å vinne … [pause] … 1 000 000 KRONER!' });
   steps.push({ type: 'rules', title: 'Reglene', cue: 'I hver runde annonserer jeg en kategori, og hvert lag velger hvem som skal svare. Hver person må svare på to kategorier, så tenk strategisk! Dere har 20 sekunder på å skrive svaret på tavla. Når tida er ute, viser dere tavlene, og [assistent] kommer med mikrofonen.' });
   steps.push({ type: 'lobby', title: 'QR-koden: salen blir med', cue: 'Og dere i salen, ikke len dere tilbake! Skann QR-koden og svar på spørsmålene sammen med lagene. Legg inn et kallenavn, og den raskeste med riktig svar vinner en premie! … Er dere klare?' });
 
@@ -23,7 +24,9 @@ export function buildPlan() {
   const finale = questions.map((q, i) => ({ q, i })).filter(({ q }) => q.round === 'Finale');
   const addQuestion = ({ q, i }, n, isFinale) => {
     const cat = catName(q.cat);
-    steps.push({ type: 'ask', qIndex: i, title: `${isFinale ? 'Finale' : 'Runde 1'} ${n}: ${cat}, spørsmålet vises`, cue: `${n === 1 && !isFinale ? 'Vi starter med kveldens første kategori: ' : ''}${cat}! ${isFinale ? '' : 'Lagene sender frem deltakeren som skal svare. '}${q.lead ?? ''} … ${q.host ?? q.text}` });
+    // Kategorien står på skjermen til NESTE trykkes, slik at lagene rekker å velge hvem som svarer.
+    steps.push({ type: 'category', qIndex: i, title: `${isFinale ? 'Finale' : 'Runde 1'}, spørsmål ${n}: ${cat}${isFinale ? '' : ', lagene velger spiller'}`, cue: `${n === 1 && !isFinale ? 'Vi starter med kveldens første kategori: ' : ''}${cat}! ${isFinale ? 'Lagene kan diskutere sammen.' : 'Lagene sender frem deltakeren som skal svare.'} [Vent til lagene er klare]` });
+    steps.push({ type: 'ask', qIndex: i, title: `${cat}: spørsmålet vises`, cue: `${q.lead ?? ''} … ${q.host ?? q.text}` });
     steps.push({ type: 'question', qIndex: i, title: `${cat}: klokka går (${game.duration} s)`, cue: isFinale ? 'Dere kan diskutere i laget. 20 sekunder, nå!' : 'Dere har 20 sekunder, nå! [Jeopardy spiller] … Snu tavlene!' });
     steps.push({ type: 'reveal', qIndex: i, title: `${cat}: fasit og poeng`, cue: isFinale ? 'Hva har lagene svart? [Assistenten går rundt] … Riktig svar er [fasit], som betyr at [lag] var nærmest og får stykket!' : 'Hva har lagene svart? [Assistenten går rundt med mikrofonen] … Riktig svar er [fasit]. Raskest i salen var [kallenavn]!' });
   };
